@@ -1,0 +1,9 @@
+1. Sign into UNIX
+2. run [ ssh-keygen -t ed25519 -C "your_email@example.com" ] with your username
+    -Press enter / DON"T CHANGE ANYTHING
+3. go to home directory ("username/")
+4. run cd/.ssh
+    this folder is hidden, use ls -a
+5. cat [whatever.pub] copy it exactly
+6. go to github settings and paste it
+7. then run " ssh -T git@github.com " to check connection
