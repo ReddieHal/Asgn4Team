@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define BLOCKSIZE 512
+
 typedef enum { false, true } bool;
 
-void print();
+int checksum(char *);

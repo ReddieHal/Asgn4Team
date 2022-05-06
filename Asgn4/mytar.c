@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     if (argc > 1) {
         /* print per item */
         if ((strchr(argv[1],'v'))) {
-            printf("v\n");
+            
             verbose = true;
         }
         /* strict compliance */
@@ -22,20 +22,20 @@ int main(int argc, char *argv[]) {
         }
         /* tar file */
         if ((strchr(argv[1],'f'))) {
-            printf("f\n");
+            
         }
 
         /* extract tar */
         if ((strchr(argv[1],'x'))) {
-            printf("x\n");
+            
         }
         /* create tar */
         if ((strchr(argv[1],'c'))) {
-            printf("c\n");
+            
         }
         /* list tar */
         if ((strchr(argv[1],'t'))) {
-            printf("t\n");
+            
         }
         
         /*easter egg*/
