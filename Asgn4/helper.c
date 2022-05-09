@@ -1,3 +1,4 @@
+#include "helper.h"
 
 int checksum(char *blockHead) {
     int i, value = 0;

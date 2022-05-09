@@ -1,3 +1,5 @@
+#include "helper.h"
+
 void tarextract(int file, char *path, bool verbose, bool strict) {
     /*read the header */
 

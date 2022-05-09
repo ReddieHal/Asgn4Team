@@ -1,3 +1,5 @@
+#include "helper.h"
+
 void tarcreate(int file, char *path, bool verbose, bool strict) {
     /*start at the path and read dir*/
 

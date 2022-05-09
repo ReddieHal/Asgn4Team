@@ -1,7 +1,7 @@
 all: mytar
 	
 mytar: mytar.o tarcreate.o tarextract.o helper.o helper.h
-	gcc -o mytar helper.h helper.o tarcreate.o tarextract.o mytar.o
+	gcc -o mytar -lm helper.h helper.o tarcreate.o tarextract.o mytar.o
 mytar.o: mytar.c
 	gcc -Werror -Wall -pedantic -g -c mytar.c
 tarcreate.o: tarcreate.c
