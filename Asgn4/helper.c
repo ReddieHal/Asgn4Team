@@ -1,6 +1,7 @@
 #include "helper.h"
 
 int checksum(char *blockHead) {
+    
     int i, value = 0;
 
     for (i = 0; i < BLOCKSIZE; i++) {
@@ -8,4 +9,5 @@ int checksum(char *blockHead) {
     }
 
     return value;
+    
 }

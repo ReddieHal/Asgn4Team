@@ -2,7 +2,7 @@
 
 
 int main(int argc, char *argv[]) {
-    /*bool verbose = false, stdCmp = false;*/
+    bool verbose = false, stdCmp = false;
 
 
     /* if args given > 1:
@@ -14,11 +14,11 @@ int main(int argc, char *argv[]) {
         /* print per item */
         if ((strchr(argv[1],'v'))) {
             
-            /*verbose = true;*/
+            verbose = true;
         }
         /* strict compliance */
         if ((strchr(argv[1],'S'))) {
-            /*stdCmp = true;*/
+            stdCmp = true;
         }
         /* tar file */
         if ((strchr(argv[1],'f'))) {
@@ -27,11 +27,11 @@ int main(int argc, char *argv[]) {
 
         /* extract tar */
         if ((strchr(argv[1],'x'))) {
-            
+            tarextract(1,NULL,verbose, stdCmp );
         }
         /* create tar */
         if ((strchr(argv[1],'c'))) {
-            
+            tarcreate(1,NULL,verbose, stdCmp );
         }
         /* list tar */
         if ((strchr(argv[1],'t'))) {

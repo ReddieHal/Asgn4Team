@@ -8,3 +8,6 @@
 typedef enum { false, true } bool;
 
 int checksum(char *);
+
+void tarcreate(int , char *, bool , bool );
+void tarextract(int , char *, bool , bool );
