@@ -2,8 +2,12 @@
 2. run [ ssh-keygen -t ed25519 -C "your_email@example.com" ] with your username
     -Press enter / DON"T CHANGE ANYTHING
 3. go to home directory ("username/")
-4. run cd/.ssh
+4. run cd .ssh
     this folder is hidden, use ls -a
 5. cat [whatever.pub] copy it exactly
 6. go to github settings and paste it
 7. then run " ssh -T git@github.com " to check connection
+8. go to directory you want the git clone to end up at.
+9. go to github directory > code > ssh > copy the command there. (Starts with "git@github");
+10. "git clone 'copypasted cmd'"
+11. DONE
