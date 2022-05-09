@@ -29,25 +29,25 @@ int main(int argc, char *argv[]) {
         /* extract tar */
         if ((strchr(argv[1],'x'))) {
             if (argc > 2) {
-                if ((file = open(argv[2], O_RDONLY)) != 0) {
+                if ((file = open(argv[2], O_RDONLY)) == -1) {
                     perror("open");
                     exit(1);
                 }
             }
             
-            tarextract(file,NULL,verbose, stdCmp );
+            tarextract(file,argv[3],verbose, stdCmp );
         }
         /* create tar */
         if ((strchr(argv[1],'c'))) {
             if (argc > 2) {
                 if ((file = open(argv[2], O_RDWR | O_CREAT | O_TRUNC, \
-                    S_IRWXU | S_IRWXG | S_IRWXO)) != 0) {
+                    S_IRWXU | S_IRWXG | S_IRWXO)) == -1) {
                     perror("open");
                     exit(1);
                 }
             }
 
-            tarcreate(file,NULL,verbose, stdCmp );
+            tarcreate(file,argv[3],verbose, stdCmp );
         }
         /* list tar */
         if ((strchr(argv[1],'t'))) {
