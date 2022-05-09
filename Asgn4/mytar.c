@@ -3,6 +3,7 @@
 
 int main(int argc, char *argv[]) {
     bool verbose = false, stdCmp = false;
+    int file;
 
 
     /* if args given > 1:
@@ -27,11 +28,26 @@ int main(int argc, char *argv[]) {
 
         /* extract tar */
         if ((strchr(argv[1],'x'))) {
-            tarextract(1,NULL,verbose, stdCmp );
+            if (argc > 2) {
+                if ((file = open(argv[2], O_RDONLY)) != 0) {
+                    perror("open");
+                    exit(1);
+                }
+            }
+            
+            tarextract(file,NULL,verbose, stdCmp );
         }
         /* create tar */
         if ((strchr(argv[1],'c'))) {
-            tarcreate(1,NULL,verbose, stdCmp );
+            if (argc > 2) {
+                if ((file = open(argv[2], O_RDWR | O_CREAT | O_TRUNC, \
+                    S_IRWXU | S_IRWXG | S_IRWXO)) != 0) {
+                    perror("open");
+                    exit(1);
+                }
+            }
+
+            tarcreate(file,NULL,verbose, stdCmp );
         }
         /* list tar */
         if ((strchr(argv[1],'t'))) {
