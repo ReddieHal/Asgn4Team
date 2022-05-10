@@ -13,6 +13,8 @@
 #define ALTFILE '\0'
 #define SYMLINK '2'
 #define DIRECT '5'
+#define BLANK "        "
+
 typedef enum { false, true } bool;
 
 int checksum(char *);

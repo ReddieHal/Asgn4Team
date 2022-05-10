@@ -47,41 +47,77 @@ header* strToStruct(char *buff) {
 }
 
 void directCase(header *head) {
+    char fullName[255];
+    
+    memcpy(fullName, head->prefix, 155);
+    strcat(fullName, head->name);
+    printf("%s\n", fullName);
+
+    
+    if (mkdir(fullName, S_IRWXU) < 0) {
+        perror("mkdir");
+        exit(1);
+    }
+}
+
+void fileCase(header *head) {
+    char fullName[255];
+    
+    memcpy(fullName, head->prefix, 155);
+    strcat(fullName, head->name);
+    printf("%s\n", fullName);
+
+    
+    if (creat(fullName, S_IRWXU) < 0) {
+        perror("creat");
+        exit(1);
+    }
 }
 
 void tarextract(int file, char *path, bool verbose, bool strict) {
     char buf[SEGSIZE];
-    char checksum[8];
+    char nu = '\0';
     char flag;
     header *head;
-    int charCount, i, sum, out;
+    int charCount, i, sum;
+    long int out;
     /*read the header */
     printf("running tarextract\n");
 
-    if ((charCount = read(file, &buf, HEADSIZE)) == -1) {
+    while((charCount = read(file, &buf, HEADSIZE)) > 0) {
+
+    if (charCount < 0) {
         perror("read");
         exit(1);
     }
     
-    /*check check sum*/
-    for (i = 0; i < 8; i++) {
-        checksum[i] = buf[148 + i];
-        buf[148 + i] = ' ';
+    /*unpack buffer string to header struct*/
+    head = strToStruct(buf);
+    if (strcmp(buf, &nu) == 0) {
+        if ((read(file, &buf, HEADSIZE) > 0) && (strcmp(buf, &nu) == 0)) {
+            printf("end of file\n");
+            exit(0);
+        }
     }
-    
+    /*check check sum*/
+    /*clear blank in buf*/
+    memcpy(&buf[148], BLANK, 8);
+
+    /*add up num*/
     sum = 0;
     for (i = 0; i < HEADSIZE; i++) {
         sum += (unsigned char)buf[i];
     }
 
-    out = strtol(checksum, NULL, 8);
+    /*string to usable num*/
+    out = strtol(head->chksum, NULL, 8);
 
     if (out != sum) {
         fprintf(stderr, "Checksum doesn't match\n");
     } 
 
-    flag = buf[156];
-    head = strToStruct(buf);
+    flag = head->typeflag[0];
+    
     switch(flag) {
         case DIRECT:
             directCase(head);
@@ -89,8 +125,19 @@ void tarextract(int file, char *path, bool verbose, bool strict) {
         case SYMLINK:
             break;
         default :
+            printf("%s\n",head->name);
+            out = strtol(head->size, NULL, 8);         
+            if (out < 512 && out > 0) {
+                out = 1;
+            } else {
+                out = out / BLOCKSIZE;
+            }
+            lseek(file, out * BLOCKSIZE, SEEK_CUR);
+            fileCase(head);
             break;
     }
+
+}
     /*check the flag type*/
     /*if its a directory*/
     /*  make the directory */
