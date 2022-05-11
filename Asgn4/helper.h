@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <dirent.h>
+#include <pwd.h>
+#include <grp.h>
 
 #define BLOCKSIZE 512
 #define REGFILE '0'
