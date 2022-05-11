@@ -51,38 +51,58 @@ void directCase(header *head) {
     
     memcpy(fullName, head->prefix, 155);
     strcat(fullName, head->name);
-    printf("%s\n", fullName);
 
     
     if (mkdir(fullName, S_IRWXU) < 0) {
         perror("mkdir");
         exit(1);
     }
+
+   
+
 }
 
-void fileCase(header *head) {
+void fileCase(header *head, int file) {
     char fullName[255];
-    
+    char buf[BLOCKSIZE];
+    int fd;
+    long int out;
+
     memcpy(fullName, head->prefix, 155);
     strcat(fullName, head->name);
-    printf("%s\n", fullName);
 
     
-    if (creat(fullName, S_IRWXU) < 0) {
-        perror("creat");
+    if ((fd = open(fullName,O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR)) < 0) {
+        perror("open");
         exit(1);
     }
+
+    out = strtol(head->size, NULL, 8);
+
+    while (out > BLOCKSIZE) {
+        read(file, buf, BLOCKSIZE);
+        write(fd, buf, BLOCKSIZE);
+        out = out - BLOCKSIZE;
+    }
+
+    if(out > 0) {
+        read(file, buf, out);
+        write(fd, buf, out);
+        out = BLOCKSIZE - out;
+        lseek(file, out, SEEK_CUR);
+    }
+    
 }
 
 void tarextract(int file, char *path, bool verbose, bool strict) {
     char buf[SEGSIZE];
+    char fullName[255];
     char nu = '\0';
     char flag;
     header *head;
     int charCount, i, sum;
     long int out;
     /*read the header */
-    printf("running tarextract\n");
 
     while((charCount = read(file, &buf, HEADSIZE)) > 0) {
 
@@ -95,7 +115,6 @@ void tarextract(int file, char *path, bool verbose, bool strict) {
     head = strToStruct(buf);
     if (strcmp(buf, &nu) == 0) {
         if ((read(file, &buf, HEADSIZE) > 0) && (strcmp(buf, &nu) == 0)) {
-            printf("end of file\n");
             exit(0);
         }
     }
@@ -120,20 +139,27 @@ void tarextract(int file, char *path, bool verbose, bool strict) {
     
     switch(flag) {
         case DIRECT:
+            if (verbose == true) {
+                memcpy(fullName, head->prefix, 155);
+                strcat(fullName, head->name);
+                printf("%s\n", fullName);
+            }
             directCase(head);
             break;
         case SYMLINK:
+            if (verbose == true) {
+                memcpy(fullName, head->prefix, 155);
+                strcat(fullName, head->name);
+                printf("%s\n", fullName);
+            }
             break;
         default :
-            printf("%s\n",head->name);
-            out = strtol(head->size, NULL, 8);         
-            if (out < 512 && out > 0) {
-                out = 1;
-            } else {
-                out = out / BLOCKSIZE;
+            if (verbose == true) {
+                memcpy(fullName, head->prefix, 155);
+                strcat(fullName, head->name);
+                printf("%s\n", fullName);
             }
-            lseek(file, out * BLOCKSIZE, SEEK_CUR);
-            fileCase(head);
+            fileCase(head, file);
             break;
     }
 
