@@ -4,7 +4,7 @@
 int main(int argc, char *argv[]) {
     bool verbose = false, stdCmp = false;
     int file;
-
+    char *temp = NULL;
 
     /* if args given > 1:
     *   - check if char exists in string
@@ -46,8 +46,17 @@ int main(int argc, char *argv[]) {
                     exit(1);
                 }
             }
-
-            tarcreate(file,argv[3],verbose, stdCmp );
+            if (argc > 3) {
+                if ((strcmp(argv[3], ".") == 0) || (strcmp(argv[3], "..") == 0)) {
+                    temp = getcwd(argv[3], PATHMAX);
+                    tarcreate(file,temp,verbose, stdCmp );
+                } else {
+                    tarcreate(file,argv[3],verbose, stdCmp );
+                }
+                
+            } else {
+                tarcreate(file,NULL,verbose, stdCmp );
+            }
         }
         /* list tar */
         if ((strchr(argv[1],'t'))) {
