@@ -8,7 +8,9 @@ Debug.
 */
 
 #include "helper.h"
+#include <arpa/inet.h>
 
+#define MAX_ID 2097151
 #define BLOCK_SIZE 512
 #define MAX_PATH_LENGTH 256
 #define MAX_NAME_LENGTH 100
@@ -26,6 +28,7 @@ char *create_header(char *path);
 int copy_file(int dst, char *path);
 int get_file_type(struct stat *inode);
 void error(char *str);
+int insert_special_int(char *where, size_t size, int32_t val);
 
 /* main create function */
 void tarcreate(int file, char *path, bool verbose, bool strict) 
@@ -171,35 +174,67 @@ char *create_header(char *path)
         return NULL;
     strcpy(name, path + cur);
 
-    /* fill in header */
-    snprintf(header + 0, 100, name); /* name */
-    snprintf(header + 100, 8, "%.7o", inode->st_mode); /* mode */
-    snprintf(header + 108, 8, "%.7o", inode->st_uid); /* uid */
-    snprintf(header + 116, 8, "%.7o", inode->st_gid); /* gid */
-    if (file_type == REG_FILE_TYPE) /* size if regular file */
+    /* name */
+    snprintf(header + 0, 101, name);
+
+    /* mode */
+    snprintf(header + 100, 8, "%.7o", inode->st_mode);
+
+    /* user ID */
+    if (inode->st_uid <= MAX_ID)
+        snprintf(header + 108, 8, "%.7o", inode->st_uid);
+    else
+        insert_special_int(header + 108, 7, inode->st_uid);
+
+    /* group ID */
+    if (inode->st_gid <= MAX_ID)
+        snprintf(header + 116, 8, "%.7o", inode->st_gid);
+    else
+        insert_special_int(header + 108, 7, inode->st_gid);
+
+    /* size */
+    if (file_type == REG_FILE_TYPE)
         snprintf(header + 124, 12, "%.11o", (unsigned int) inode->st_size);
-    else /* 0 if not regular file */
+    else
         snprintf(header + 124, 12, "%.11o", 0);
-    snprintf(header + 136, 12, "%.11o", 
-        (unsigned int) inode->st_mtime); /* mtime */
-    /* checksum calculated later */
-    snprintf(header + 156, 1, "%d", file_type); /* file type */
-    if (file_type == LNK_FILE_TYPE) /* link value if symlink */
+
+    /* mtime */
+    snprintf(header + 136, 12, "%.11o", (unsigned int) inode->st_mtim.tv_sec);
+
+    /* file type */
+    snprintf(header + 156, 1, "%d", file_type);
+
+    /* link value if symlink */
+    if (file_type == LNK_FILE_TYPE)
         if (readlink(path, header + 157, 100) < 0)
             return NULL;
-    snprintf(header + 257, 6, "ustar"); /* "ustar" */
-    snprintf(header + 263, 2, "00"); /* "00" */
+
+    /* "ustar" */
+    snprintf(header + 257, 6, "ustar");
+
+    /* "00" */
+    snprintf(header + 263, 2, "00");
+
+    /* user name */
     struct passwd *u_pwd = getpwuid(inode->st_uid);
     if (u_pwd == NULL)
         return NULL;
-    snprintf(header + 265, 31, u_pwd->pw_name);  /* user name */
+    snprintf(header + 265, 31, u_pwd->pw_name);
+
+    /* group name */
     struct group *gr_pwd = getgrgid(inode->st_gid);
     if (gr_pwd == NULL)
         return NULL;
-    snprintf(header + 297, 31, gr_pwd->gr_name); /* group name */
-    snprintf(header + 329, 8, "%.7o", major(inode->st_dev)); /* major number */
-    snprintf(header + 337, 8, "%.7o", minor(inode->st_dev)); /* minor number */
-    snprintf(header + 345, strlen(path) - strlen(name) - 1, path); /* prefix */
+    snprintf(header + 297, 31, gr_pwd->gr_name);
+
+    /* major number */
+    snprintf(header + 329, 8, "%.7o", major(inode->st_dev));
+
+    /* minor number */
+    snprintf(header + 337, 8, "%.7o", minor(inode->st_dev));
+
+    /* prefix */
+    snprintf(header + 345, strlen(path) - strlen(name), path);
 
     /* checksum */
     int sum = 0;
@@ -207,7 +242,7 @@ char *create_header(char *path)
     for (i = 0; i < BLOCK_SIZE; i++)
         sum += (unsigned char) header[i];
     sum += CHECKSUM_WIDTH * SPACE;
-    snprintf(header + 148, 8, "%o", sum);
+    snprintf(header + 148, 8, "%.7o", sum);
 
     /* free memory and return */
     free(name);
@@ -266,4 +301,34 @@ void error(char *str)
 {
     perror(str);
     exit(1);
+}
+
+/* for handling id over 7 octal digits */
+int insert_special_int(char *where, size_t size, int32_t val) 
+{
+    /* For interoperability with GNU tar. GNU seems to
+    * set the high–order bit of the first byte, then
+    * treat the rest of the field as a binary integer
+    * in network byte order.
+    * Insert the given integer into the given field
+    * using this technique. Returns 0 on success, nonzero
+    * otherwise
+    */
+    int err = 0;
+    if (val < 0 || (size < sizeof(val))) 
+    {
+        /* if it’s negative, bit 31 is set and we can’t use the flag
+        * if len is too small, we can’t write it. Either way, we’re
+        * done.
+        */
+        err++;
+    } 
+    else 
+    {
+        /* game on....*/
+        memset(where, 0, size); /* Clear out the buffer */
+        *(int32_t *)(where+size-sizeof(val)) = htonl(val); /* place the int */
+        *where |= 0x80; /* set that high–order bit */
+    }
+    return err;
 }
