@@ -106,14 +106,21 @@ void tarlist(int file, char *path, bool verbose, bool stdCmp) {
         } else {
            flPermPtr = filePerm(head);
            ugnamePtr = ugname(head);
-           printf("%s %s ", flPermPtr, ugnamePtr);
 
            *mtime = (int)strtol(head->mtime, NULL, 8);
            tinfo = localtime(mtime);
            strftime(timeBuf, 17, "%Y-%m-%d %H:%M", tinfo);
 
-           printf("%14lu %s %s\n", strtol(head->size, NULL, 8), \
+           printf("%s %-17s %8lu %s %s\n", flPermPtr, ugnamePtr, \
+           strtol(head->size, NULL, 8), \
            timeBuf, fullName);
+
+           *mtime = (int)strtol(head->mtime, NULL, 8);
+           tinfo = localtime(mtime);
+           strftime(timeBuf, 17, "%Y-%m-%d %H:%M", tinfo);
+            /*
+           printf("%9lu %s %s\n", strtol(head->size, NULL, 8), \
+           timeBuf, fullName); */
            
            free(flPermPtr);
            free(ugnamePtr);
