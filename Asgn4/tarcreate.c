@@ -173,14 +173,14 @@ char *create_header(char *path)
 
     /* fill in header */
     snprintf(header + 0, 100, name); /* name */
-    snprintf(header + 100, 8, "%o", inode->st_mode); /* mode */
-    snprintf(header + 108, 8, "%o", inode->st_uid); /* uid */
-    snprintf(header + 116, 8, "%o", inode->st_gid); /* gid */
+    snprintf(header + 100, 8, "%.7o", inode->st_mode); /* mode */
+    snprintf(header + 108, 8, "%.7o", inode->st_uid); /* uid */
+    snprintf(header + 116, 8, "%.7o", inode->st_gid); /* gid */
     if (file_type == REG_FILE_TYPE) /* size if regular file */
-        snprintf(header + 124, 12, "%o", (unsigned int) inode->st_size);
+        snprintf(header + 124, 12, "%.11o", (unsigned int) inode->st_size);
     else /* 0 if not regular file */
-        snprintf(header + 124, 12, "0");
-    snprintf(header + 136, 12, "%o", 
+        snprintf(header + 124, 12, "%.11o", 0);
+    snprintf(header + 136, 12, "%.11o", 
         (unsigned int) inode->st_mtime); /* mtime */
     /* checksum calculated later */
     snprintf(header + 156, 1, "%d", file_type); /* file type */
@@ -192,13 +192,13 @@ char *create_header(char *path)
     struct passwd *u_pwd = getpwuid(inode->st_uid);
     if (u_pwd == NULL)
         return NULL;
-    snprintf(header + 265, 32, u_pwd->pw_name);  /* user name */
+    snprintf(header + 265, 31, u_pwd->pw_name);  /* user name */
     struct group *gr_pwd = getgrgid(inode->st_gid);
     if (gr_pwd == NULL)
         return NULL;
-    snprintf(header + 297, 32, gr_pwd->gr_name); /* group name */
-    snprintf(header + 329, 8, "%o", major(inode->st_dev)); /* major number */
-    snprintf(header + 337, 8, "%o", minor(inode->st_dev)); /* minor number */
+    snprintf(header + 297, 31, gr_pwd->gr_name); /* group name */
+    snprintf(header + 329, 8, "%.7o", major(inode->st_dev)); /* major number */
+    snprintf(header + 337, 8, "%.7o", minor(inode->st_dev)); /* minor number */
     snprintf(header + 345, strlen(path) - strlen(name) - 1, path); /* prefix */
 
     /* checksum */
