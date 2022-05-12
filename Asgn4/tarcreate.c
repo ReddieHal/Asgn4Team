@@ -94,9 +94,9 @@ int add_file_rec(int file, char *path)
         DIR *dir = opendir(path);
         if (dir == NULL)
             return -1;
-        if (readdir(dir) < 0) /* . */
+        if (readdir(dir) == NULL) /* . */
             return -1;
-        if (readdir(dir) < 0) /* .. */
+        if (readdir(dir) == NULL) /* .. */
             return -1;
 
         /* recursively reads all dir entries */
@@ -202,7 +202,7 @@ char *create_header(char *path)
     snprintf(header + 136, 12, "%.11o", (unsigned int) inode->st_mtim.tv_sec);
 
     /* file type */
-    snprintf(header + 156, 1, "%d", file_type);
+    snprintf(header + 156, 2, "%d", file_type);
 
     /* link value if symlink */
     if (file_type == LNK_FILE_TYPE)
@@ -213,7 +213,7 @@ char *create_header(char *path)
     snprintf(header + 257, 6, "ustar");
 
     /* "00" */
-    snprintf(header + 263, 2, "00");
+    snprintf(header + 263, 3, "00");
 
     /* user name */
     struct passwd *u_pwd = getpwuid(inode->st_uid);
