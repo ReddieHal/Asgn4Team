@@ -16,3 +16,5 @@ Working with GIT:
 1. git pull - gets most recent update to main directory 
 2. git commit / git commit -a - commits changes to later push
 3. git push - push to directory
+
+testfile dir: home/pn-cs357/lib/asgn4/Tests/
