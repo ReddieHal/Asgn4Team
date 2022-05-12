@@ -1,5 +1,40 @@
 #include "helper.h"
 
+char *filePerm(header *head) {
+    int i;
+    long int out;
+    int modes[] = {S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH};
+    char bestCase[] = "rwxrwxrwx";
+    char flag;
+    char *perm = (char *)malloc(sizeof(char) * 10);
+
+    flag = head->typeflag[0];
+    switch (flag){
+        case DIRECT:
+            perm[0] = 'd';
+            break;
+        case SYMLINK:
+            perm[0] = 'l';
+            break;
+        case REGFILE:
+        case ALTFILE:
+            perm[0] = '-';
+            break;
+        default:
+            break;
+    }
+
+    for(i = 0; i < 9; i++) {
+        out = strtol(head->mode, NULL, 8);
+        if (out & modes[i]) {
+            perm[i+1] = bestCase[i];
+        } else {
+            perm[i + 1] = '-';
+        }
+    }
+    return perm;
+}
+
 void tarlist(int file, char *path, bool verbose, bool stdCmp) {
     char buf[SEGSIZE];
     char fullName[255];
@@ -43,7 +78,7 @@ void tarlist(int file, char *path, bool verbose, bool stdCmp) {
             strcat(fullName, head->name);
             printf("%s\n", fullName);
         } else {
-           /* printf("%10s%17s%8o%16s"); */
+           printf("%s\n", filePerm(head));
         }
         
 
