@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include <pwd.h>
 #include <grp.h>
+#include <time.h>
 
 #define SEGSIZE 4096
 #define PATHMAX 256
