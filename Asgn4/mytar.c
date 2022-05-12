@@ -51,7 +51,14 @@ int main(int argc, char *argv[]) {
         }
         /* list tar */
         if ((strchr(argv[1],'t'))) {
+            if (argc > 2) {
+                if ((file = open(argv[2], O_RDONLY)) == -1) {
+                    perror("open");
+                    exit(1);
+                }
+            }
             
+            tarlist(file,argv[3],verbose, stdCmp );
         }
         
         /*easter egg*/
