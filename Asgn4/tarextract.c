@@ -57,9 +57,6 @@ void directCase(header *head) {
         perror("mkdir");
         exit(1);
     }
-
-   
-
 }
 
 void fileCase(header *head, int file) {
@@ -94,6 +91,21 @@ void fileCase(header *head, int file) {
     
 }
 
+void symCase(header *head) {
+    char fullName[255];
+    
+    memcpy(fullName, head->prefix, 155);
+    strcat(fullName, head->name);
+
+    
+    if (link(fullName, head->typeflag) < 0) {
+        perror("link");
+        exit(1);
+    }
+
+
+}
+
 void tarextract(int file, char *path, bool verbose, bool strict) {
     char buf[SEGSIZE];
     char fullName[255];
@@ -118,6 +130,7 @@ void tarextract(int file, char *path, bool verbose, bool strict) {
             exit(0);
         }
     }
+
     /*check check sum*/
     /*clear blank in buf*/
     memcpy(&buf[148], BLANK, 8);
@@ -133,6 +146,7 @@ void tarextract(int file, char *path, bool verbose, bool strict) {
 
     if (out != sum) {
         fprintf(stderr, "Checksum doesn't match\n");
+        exit(1);
     } 
 
     flag = head->typeflag[0];
@@ -152,8 +166,10 @@ void tarextract(int file, char *path, bool verbose, bool strict) {
                 strcat(fullName, head->name);
                 printf("%s\n", fullName);
             }
+            symCase(head, file);
             break;
-        default :
+        case REGFILE:
+        case ALTFILE:
             if (verbose == true) {
                 memcpy(fullName, head->prefix, 155);
                 strcat(fullName, head->name);
@@ -161,6 +177,9 @@ void tarextract(int file, char *path, bool verbose, bool strict) {
             }
             fileCase(head, file);
             break;
+        default:
+            
+            
     }
 
 }
