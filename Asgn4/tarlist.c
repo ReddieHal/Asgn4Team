@@ -1,12 +1,13 @@
 #include "helper.h"
 
 char *filePerm(header *head) {
-    int i;
-    long int out;
-    int modes[] = {S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH};
+    int i = 0;
+    long int out = 0;
+    int modes[] = {S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, \
+    S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH};
     char bestCase[] = "rwxrwxrwx";
     char flag;
-    char *perm = (char *)malloc(sizeof(char) * 10);
+    char *perm = (char *)calloc(10, sizeof(char));
 
     flag = head->typeflag[0];
     switch (flag){
@@ -35,22 +36,46 @@ char *filePerm(header *head) {
     return perm;
 }
 
+char *ugname(header *head) {
+    char *out = (char *)calloc(35, sizeof(char));
+    out[34] = '\0';
+    if ((strlen(head->uname) + strlen(head->gname)) <= 34) {
+        strcat(out, head->uname);
+        strcat(out, "/");
+        strcat(out, head->gname);
+    } else {
+        out = NULL;
+    }
+
+    return out;
+}
+
 void tarlist(int file, char *path, bool verbose, bool stdCmp) {
     char buf[SEGSIZE];
     char fullName[255];
+    char timeBuf[18];
     char nu = '\0';
+    char *flPermPtr, *ugnamePtr;
     int charCount, i, sum, diff;
     long int out;
     header *head;
+    
 
     while((charCount = read(file, &buf, HEADSIZE)) > 0) {
+        time_t *mtime = (time_t *)calloc(1, sizeof(time_t));
+        struct tm *tinfo = NULL;
+
+        memset(fullName, '\0', 254);
+        memset(timeBuf, '\0', 17);
+
         if (charCount < 0) {
             perror("read");
             exit(1);
         }
 
         if (strcmp(buf, &nu) == 0) {
-            if ((read(file, &buf, HEADSIZE) > 0) && (strcmp(buf, &nu) == 0)) {
+            if ((read(file, &buf, HEADSIZE) > 0) && \
+            (strcmp(buf, &nu) == 0)) {
                 exit(0);
             }
         }
@@ -73,12 +98,27 @@ void tarlist(int file, char *path, bool verbose, bool stdCmp) {
             exit(1);
         }
 
+        memcpy(fullName, head->prefix, 155);
+        strcat(fullName, head->name);
+
         if (verbose == false) {
-            memcpy(fullName, head->prefix, 155);
-            strcat(fullName, head->name);
             printf("%s\n", fullName);
         } else {
-           printf("%s\n", filePerm(head));
+           flPermPtr = filePerm(head);
+           ugnamePtr = ugname(head);
+           printf("%s %s ", flPermPtr, ugnamePtr);
+
+           *mtime = (int)strtol(head->mtime, NULL, 8);
+           tinfo = localtime(mtime);
+           strftime(timeBuf, 17, "%Y-%m-%d %H:%M", tinfo);
+
+           printf("%14lu %s %s\n", strtol(head->size, NULL, 8), \
+           timeBuf, fullName);
+           
+           free(flPermPtr);
+           free(ugnamePtr);
+        
+           free(mtime); 
         }
         
 
