@@ -3,8 +3,9 @@
 
 int main(int argc, char *argv[]) {
     bool verbose = false, stdCmp = false;
-    int file;
+    int file, i, size;
     char *temp = NULL;
+    char **paths;
 
     /* if args given > 1:
     *   - check if char exists in string
@@ -35,9 +36,14 @@ int main(int argc, char *argv[]) {
                 }
             }
             if (argc > 3) {
-                tarextract(file,argv[3],verbose, stdCmp );
+                size = (argc - 3);
+                paths = (char **)malloc(sizeof(char *) * size);
+                for (i = 3; i < argc; i++) {
+                    paths[i - 3] = argv[i];
+                }
+                tarlist(file,paths,size,verbose, stdCmp);
             } else {
-                tarextract(file,NULL,verbose, stdCmp );
+                tarextract(file,NULL, 0, verbose, stdCmp );
             }
         }
         /* create tar */
@@ -71,9 +77,14 @@ int main(int argc, char *argv[]) {
                 }
             }
             if (argc > 3) {
-                tarlist(file,argv[3],verbose, stdCmp);
+                size = (argc - 3);
+                paths = (char **)malloc(sizeof(char *) * size);
+                for (i = 3; i < argc; i++) {
+                    paths[i - 3] = argv[i];
+                }
+                tarlist(file,paths,size, verbose, stdCmp);
             } else {
-                tarlist(file,NULL,verbose, stdCmp );
+                tarlist(file,NULL, 0, verbose, stdCmp );
             }
            
         }

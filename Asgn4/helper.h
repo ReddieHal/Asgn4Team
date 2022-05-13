@@ -46,7 +46,8 @@ typedef struct header {
 int checksum(char *);
 
 void tarcreate(int , char *, bool , bool );
-void tarextract(int , char *, bool , bool );
-void tarlist(int , char *, bool , bool );
+void tarextract(int , char **, int, bool , bool );
+void tarlist(int , char **, int, bool , bool );
 
 header* strToStruct(char *);
+void bigName(header *, char *);

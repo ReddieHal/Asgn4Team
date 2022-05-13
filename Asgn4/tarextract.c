@@ -2,24 +2,6 @@
 #define SEGSIZE 4096
 #define HEADSIZE 512
 
-void bigName(header* head, char *fullName) {
-    memcpy(fullName, head->prefix, 155);
-
-    if (strlen(head->prefix) > 155) {
-        memcpy(&fullName[155], "/", 1);
-    } else {
-        if (strlen(head->prefix) > 0) {
-            memcpy(&fullName[strlen(head->prefix)], "/", 1);
-        } 
-    }
-
-    if (strlen(head->prefix) > 0) {
-        memcpy(&fullName[strlen(head->prefix) + 1], head->name, 100);
-    } else {
-        memcpy(&fullName[strlen(head->prefix)], head->name, 100);
-    }
-}
-
 void directCase(header *head) {
     char fullName[255];
     
@@ -74,18 +56,19 @@ void symCase(header *head) {
 
 }
 
-void tarextract(int file, char *path, bool verbose, bool strict) {
+void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
     char buf[SEGSIZE];
     char fullName[255];
     char nu = '\0';
     char flag;
+    bool cont = false;
     header *head;
     int charCount, i, sum;
     long int out;
     /*read the header */
 
     while((charCount = read(file, &buf, HEADSIZE)) > 0) {
-
+        cont = false;
         if (charCount < 0) {
             perror("read");
             exit(1);
@@ -119,28 +102,40 @@ void tarextract(int file, char *path, bool verbose, bool strict) {
         } 
 
         flag = head->typeflag[0];
+
+        bigName(head, fullName);
+
+        if (path != NULL) {
+            for (i = 0; i < pathsize; i++) {
+                if (strstr(fullName, path[i])) {
+                    cont = true;
+                }
+            }
+
+            if (cont == false) {
+                continue;
+            }
+        }
+
+        if (path != NULL && cont == false) {
+            continue;
+        }
+        
+
+        if (verbose == true) {
+            printf("%s\n", fullName);
+        }
+
         
         switch(flag) {
             case DIRECT:
-                if (verbose == true) {
-                    bigName(head, fullName);
-                    printf("%s\n", fullName);
-                }
                 directCase(head);
                 break;
             case SYMLINK:
-                if (verbose == true) {
-                    bigName(head, fullName);
-                    printf("%s\n", fullName);
-                }
                 symCase(head);
                 break;
             case REGFILE:
             case ALTFILE:
-                if (verbose == true) {
-                    bigName(head, fullName);
-                    printf("%s\n", fullName);
-                }
                 fileCase(head, file);
                 break;
             default:

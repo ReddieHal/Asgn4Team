@@ -1,5 +1,7 @@
 #include "helper.h"
 
+
+
 char *filePerm(header *head) {
     int i = 0;
     long int out = 0;
@@ -50,7 +52,7 @@ char *ugname(header *head) {
     return out;
 }
 
-void tarlist(int file, char *path, bool verbose, bool stdCmp) {
+void tarlist(int file, char **path,int pathsize, bool verbose, bool stdCmp) {
     char buf[SEGSIZE];
     char fullName[256];
     char timeBuf[18];
@@ -98,26 +100,21 @@ void tarlist(int file, char *path, bool verbose, bool stdCmp) {
             exit(1);
         }
 
-        memcpy(fullName, head->prefix, 155);
-
-        if (strlen(head->prefix) > 155) {
-            memcpy(&fullName[155], "/", 1);
-        } else {
-            if (strlen(head->prefix) > 0) {
-                memcpy(&fullName[strlen(head->prefix)], "/", 1);
-            } 
-        }
-
-        if (strlen(head->prefix) > 0) {
-            memcpy(&fullName[strlen(head->prefix) + 1], head->name, 100);
-        } else {
-            memcpy(&fullName[strlen(head->prefix)], head->name, 100);
-        }
-
+        bigName(head, fullName);
        
 
         if (verbose == false) {
-            printf("%s\n", fullName);
+
+            if (path != NULL) {
+                for (i = 0; i < pathsize; i++) {
+                    if (strstr(fullName, path[i])) {
+                        printf("%s\n", fullName);
+                    }
+                }
+            } else {
+                printf("%s\n", fullName);
+            }
+            
         } else {
            flPermPtr = filePerm(head);
            ugnamePtr = ugname(head);
@@ -126,17 +123,20 @@ void tarlist(int file, char *path, bool verbose, bool stdCmp) {
            tinfo = localtime(mtime);
            strftime(timeBuf, 17, "%Y-%m-%d %H:%M", tinfo);
 
-           printf("%s %-17s %8lu %s %s\n", flPermPtr, ugnamePtr, \
-           strtol(head->size, NULL, 8), \
-           timeBuf, fullName);
-
-           *mtime = (int)strtol(head->mtime, NULL, 8);
-           tinfo = localtime(mtime);
-           strftime(timeBuf, 17, "%Y-%m-%d %H:%M", tinfo);
-            /*
-           printf("%9lu %s %s\n", strtol(head->size, NULL, 8), \
-           timeBuf, fullName); */
-           
+            if (path != NULL) {
+                for (i = 0; i < pathsize; i++) {
+                    if (strstr(fullName, path[i])) {
+                        printf("%s %-17s %8lu %s %s\n", flPermPtr, ugnamePtr, \
+                        strtol(head->size, NULL, 8), \
+                        timeBuf, fullName);
+                    }
+                }
+            } else {
+                printf("%s %-17s %8lu %s %s\n", flPermPtr, ugnamePtr, \
+                strtol(head->size, NULL, 8), \
+                timeBuf, fullName);
+            }
+            
            free(flPermPtr);
            free(ugnamePtr);
         

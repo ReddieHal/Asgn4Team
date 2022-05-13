@@ -35,3 +35,21 @@ header* strToStruct(char *buff) {
     
     return ret;
 }
+
+void bigName(header* head, char *fullName) {
+    memcpy(fullName, head->prefix, 155);
+
+    if (strlen(head->prefix) > 155) {
+        memcpy(&fullName[155], "/", 1);
+    } else {
+        if (strlen(head->prefix) > 0) {
+            memcpy(&fullName[strlen(head->prefix)], "/", 1);
+        } 
+    }
+
+    if (strlen(head->prefix) > 0) {
+        memcpy(&fullName[strlen(head->prefix) + 1], head->name, 100);
+    } else {
+        memcpy(&fullName[strlen(head->prefix)], head->name, 100);
+    }
+}
