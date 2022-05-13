@@ -52,7 +52,7 @@ char *ugname(header *head) {
 
 void tarlist(int file, char *path, bool verbose, bool stdCmp) {
     char buf[SEGSIZE];
-    char fullName[255];
+    char fullName[256];
     char timeBuf[18];
     char nu = '\0';
     char *flPermPtr, *ugnamePtr;
@@ -99,7 +99,22 @@ void tarlist(int file, char *path, bool verbose, bool stdCmp) {
         }
 
         memcpy(fullName, head->prefix, 155);
-        strcat(fullName, head->name);
+
+        if (strlen(head->prefix) > 155) {
+            memcpy(&fullName[155], "/", 1);
+        } else {
+            if (strlen(head->prefix) > 0) {
+                memcpy(&fullName[strlen(head->prefix)], "/", 1);
+            } 
+        }
+
+        if (strlen(head->prefix) > 0) {
+            memcpy(&fullName[strlen(head->prefix) + 1], head->name, 100);
+        } else {
+            memcpy(&fullName[strlen(head->prefix)], head->name, 100);
+        }
+
+       
 
         if (verbose == false) {
             printf("%s\n", fullName);

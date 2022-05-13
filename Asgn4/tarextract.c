@@ -2,11 +2,28 @@
 #define SEGSIZE 4096
 #define HEADSIZE 512
 
+void bigName(header* head, char *fullName) {
+    memcpy(fullName, head->prefix, 155);
+
+    if (strlen(head->prefix) > 155) {
+        memcpy(&fullName[155], "/", 1);
+    } else {
+        if (strlen(head->prefix) > 0) {
+            memcpy(&fullName[strlen(head->prefix)], "/", 1);
+        } 
+    }
+
+    if (strlen(head->prefix) > 0) {
+        memcpy(&fullName[strlen(head->prefix) + 1], head->name, 100);
+    } else {
+        memcpy(&fullName[strlen(head->prefix)], head->name, 100);
+    }
+}
+
 void directCase(header *head) {
     char fullName[255];
     
-    memcpy(fullName, head->prefix, 155);
-    strcat(fullName, head->name);
+    bigName(head, fullName);
 
     
     if (mkdir(fullName, S_IRWXU) < 0) {
@@ -21,9 +38,7 @@ void fileCase(header *head, int file) {
     int fd;
     long int out;
 
-    memcpy(fullName, head->prefix, 155);
-    strcat(fullName, head->name);
-
+    bigName(head, fullName);
     
     if ((fd = open(fullName,O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR)) < 0) {
         perror("open");
@@ -50,10 +65,8 @@ void fileCase(header *head, int file) {
 void symCase(header *head) {
     char fullName[255];
     
-    memcpy(fullName, head->prefix, 155);
-    strcat(fullName, head->name);
-
-    if (link(fullName, head->typeflag) < 0) {
+    bigName(head, fullName);
+    if (symlink(head->linkname, fullName) < 0) {
         perror("link");
         exit(1);
     }
@@ -110,16 +123,14 @@ void tarextract(int file, char *path, bool verbose, bool strict) {
         switch(flag) {
             case DIRECT:
                 if (verbose == true) {
-                    memcpy(fullName, head->prefix, 155);
-                    strcat(fullName, head->name);
+                    bigName(head, fullName);
                     printf("%s\n", fullName);
                 }
                 directCase(head);
                 break;
             case SYMLINK:
                 if (verbose == true) {
-                    memcpy(fullName, head->prefix, 155);
-                    strcat(fullName, head->name);
+                    bigName(head, fullName);
                     printf("%s\n", fullName);
                 }
                 symCase(head);
@@ -127,8 +138,7 @@ void tarextract(int file, char *path, bool verbose, bool strict) {
             case REGFILE:
             case ALTFILE:
                 if (verbose == true) {
-                    memcpy(fullName, head->prefix, 155);
-                    strcat(fullName, head->name);
+                    bigName(head, fullName);
                     printf("%s\n", fullName);
                 }
                 fileCase(head, file);
