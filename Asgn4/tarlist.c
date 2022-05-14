@@ -67,7 +67,7 @@ void tarlist(int file, char **path,int pathsize, bool verbose, bool stdCmp) {
         time_t *mtime = (time_t *)calloc(1, sizeof(time_t));
         struct tm *tinfo = NULL;
 
-        memset(fullName, '\0', 254);
+        memset(fullName, '\0', 255);
         memset(timeBuf, '\0', 17);
 
         if (charCount < 0) {

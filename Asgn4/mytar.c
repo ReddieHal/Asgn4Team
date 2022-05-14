@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
         if ((strchr(argv[1],'x'))) {
             if (argc > 2) {
                 if ((file = open(argv[2], O_RDONLY)) == -1) {
-                    perror("open");
+                    perror("mytar: open");
                     exit(1);
                 }
             }
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
                 for (i = 3; i < argc; i++) {
                     paths[i - 3] = argv[i];
                 }
-                tarlist(file,paths,size,verbose, stdCmp);
+                tarextract(file,paths,size,verbose, stdCmp);
             } else {
                 tarextract(file,NULL, 0, verbose, stdCmp );
             }
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
         if ((strchr(argv[1],'t'))) {
             if (argc > 2) {
                 if ((file = open(argv[2], O_RDONLY)) == -1) {
-                    perror("open");
+                    perror("mytar: open");
                     exit(1);
                 }
             }
