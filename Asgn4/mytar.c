@@ -12,6 +12,10 @@ int main(int argc, char *argv[]) {
     *       - for "v" & "S" enable their usage
     *       - else follow their respective cmds 
     */
+    if (argc == 1 || argc == 2) {
+        fprintf(stderr, "Usage: mytar [ctxvS]f tarfile [ path [ ... ] ]\n");
+    }
+
     if (argc > 1) {
         /* print per item */
         if ((strchr(argv[1],'v'))) {

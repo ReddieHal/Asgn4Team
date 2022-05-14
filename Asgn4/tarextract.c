@@ -92,6 +92,8 @@ void symCase(header *head, bool extract) {
     if (extract == true) {
         bigName(head, fullName);
 
+        dirMaker(fullName);
+
         if (symlink(head->linkname, fullName) < 0) {
             perror("link");
             exit(1);
@@ -147,7 +149,8 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
             exit(1);
         } 
 
-        flag = head->typeflag[0];
+        complianceChecker(head, strict);
+        
 
         bigName(head, fullName);
 
@@ -166,7 +169,8 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
             printf("%s\n", fullName);
         }
 
-        
+        flag = head->typeflag[0];
+
         switch(flag) {
             case DIRECT:
                 directCase(head, cont);
@@ -179,6 +183,7 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
                 fileCase(head, file, cont);
                 break;
             default:
+                fprintf(stderr, "Invalid File Type");
                 break;
                 
         }

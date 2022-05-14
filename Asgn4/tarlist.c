@@ -100,6 +100,8 @@ void tarlist(int file, char **path,int pathsize, bool verbose, bool stdCmp) {
             exit(1);
         }
 
+        complianceChecker(head, stdCmp);
+
         bigName(head, fullName);
        
 
