@@ -26,6 +26,22 @@ void dirMaker(char *bigName) {
     }
 }
 
+void changeUtime(header* head, char *bigName) {
+    struct utimbuf new;
+    uint8_t mtime = 0;
+
+    mtime = strtol(head->mtime, NULL, 8);
+
+    new.actime = time(NULL);
+    new.modtime = mtime;
+
+    if (utime(bigName, &new)) {
+        perror("utime");
+        exit(1);
+    }
+
+}
+
 void directCase(header *head, bool extract) {
     char fullName[256];
     memset(fullName, '\0', 255);
@@ -33,6 +49,7 @@ void directCase(header *head, bool extract) {
 
     if (extract == true) {
         dirMaker(fullName);
+        changeUtime(head, fullName);
     }
     
 }
@@ -50,10 +67,11 @@ void fileCase(header *head, int file, bool extract) {
         dirMaker(fullName);
 
         if ((fd = open(fullName, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR)) < 0) {
-        printf("%s", fullName);
-        perror("fd-open");
-        exit(1);
+            printf("%s", fullName);
+            perror("fd-open");
+            exit(1);
         }
+        changeUtime(head, fullName);
 
         out = strtol(head->size, NULL, 8);
 
@@ -98,6 +116,7 @@ void symCase(header *head, bool extract) {
             perror("link");
             exit(1);
         }
+    
     }
     
 }
