@@ -14,6 +14,7 @@ int main(int argc, char *argv[]) {
     */
     if (argc == 1 || argc == 2) {
         fprintf(stderr, "Usage: mytar [ctxvS]f tarfile [ path [ ... ] ]\n");
+        exit(1);
     }
 
     if (argc > 1) {

@@ -2,6 +2,11 @@
 #define SEGSIZE 4096
 #define HEADSIZE 512
 
+/*Robustly built directory checker
+* not very necessary if no path is given
+* but very necessary when path is given
+* to make sure dependencies exist
+*/
 void dirMaker(char *bigName) {
     char tempName[256];
     struct stat tempStat;
@@ -26,9 +31,11 @@ void dirMaker(char *bigName) {
     }
 }
 
+
+
 void changeUtime(header* head, char *bigName) {
     struct utimbuf new;
-    uint8_t mtime = 0;
+    unsigned long int mtime = 0;
 
     mtime = strtol(head->mtime, NULL, 8);
 
@@ -71,7 +78,7 @@ void fileCase(header *head, int file, bool extract) {
             perror("fd-open");
             exit(1);
         }
-        changeUtime(head, fullName);
+        
 
         out = strtol(head->size, NULL, 8);
 
@@ -87,6 +94,8 @@ void fileCase(header *head, int file, bool extract) {
             out = BLOCKSIZE - out;
             lseek(file, out, SEEK_CUR);
         }
+
+        changeUtime(head, fullName);
     } else {
         out = strtol(head->size, NULL, 8);
 
@@ -116,7 +125,6 @@ void symCase(header *head, bool extract) {
             perror("link");
             exit(1);
         }
-    
     }
     
 }
@@ -207,15 +215,5 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
                 
         }
 
-}
-    /*check the flag type*/
-    /*if its a directory*/
-    /*  make the directory */
-    /*  rename the directory */
-    /*  move to the directory */
-
-    /*if its a file */
-    /*  make/open a new file */
-    /*  copy its contents */
-    /* continue */
+    }
 }
