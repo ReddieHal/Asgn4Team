@@ -11,6 +11,7 @@ Debug.
 #include <arpa/inet.h>
 
 #define MAX_ID 2097151
+#define MAX_MODE 4095
 #define BLOCK_SIZE 512
 #define MAX_PATH_LENGTH 256
 #define MAX_NAME_LENGTH 100
@@ -23,8 +24,8 @@ Debug.
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
 void tarcreate(int file, char *path, bool verbose, bool strict);
-int add_file_rec(int file, char *path);
-char *create_header(char *path);
+int add_file_rec(int file, char *path, int offset);
+char *create_header(char *path, int offset);
 int copy_file(int dst, char *path);
 int get_file_type(struct stat *inode);
 void error(char *str);
@@ -33,9 +34,15 @@ int insert_special_int(char *where, size_t size, int32_t val);
 /* main create function */
 void tarcreate(int file, char *path, bool verbose, bool strict) 
 {
+    /* "The path that can be specified
+    is not the Full Path" */
+    int offset = strlen(path);
+    while (path[offset] != '/')
+        offset--;
+
     /* call recursive file archiver */
-    if (add_file_rec(file, path) < 0)
-        error("create\n");
+    if (add_file_rec(file, path, offset) < 0);
+        //error("create\n");
 
     /* allocate empty block */
     char *empty = (char *) calloc(BLOCK_SIZE, 1);
@@ -57,7 +64,7 @@ void tarcreate(int file, char *path, bool verbose, bool strict)
 }
 
 /* recursive file archiver */
-int add_file_rec(int file, char *path)
+int add_file_rec(int file, char *path, int offset)
 {
     /* declare and get stat */
     struct stat *inode = (struct stat *) malloc(sizeof(struct stat));
@@ -72,7 +79,7 @@ int add_file_rec(int file, char *path)
         return -1;
 
     /* create and copy header */
-    char *header = create_header(path);
+    char *header = create_header(path, offset);
     if (header == NULL)
         return -1;
     if (write(file, header, BLOCK_SIZE) < 0)
@@ -120,7 +127,7 @@ int add_file_rec(int file, char *path)
             new_path[strlen(path) + strlen(dir_entry->d_name) + 1] = '\0';
 
             /* adds new path */
-            if (add_file_rec(file, new_path) < 0)
+            if (add_file_rec(file, new_path, offset) < 0)
                 perror("Corrupt file\n");
 
             /* frees new path */
@@ -142,10 +149,10 @@ int add_file_rec(int file, char *path)
 }
 
 /* creates and returns header from file path */
-char *create_header(char *path)
+char *create_header(char *path, int offset)
 {
     /* error if path is too long */
-    if (strlen(path) > MAX_PATH_LENGTH)
+    if (strlen(path + offset) > MAX_PATH_LENGTH)
         return NULL;
     
     /* get inode and file type */
@@ -167,30 +174,30 @@ char *create_header(char *path)
     char *name = calloc(MAX_NAME_LENGTH + 1, 1);
     if (name == NULL)
         return NULL;
-    int cur = min(1, strlen(path) - 100); /* char 0 is slash */
-    while(path[cur - 1] != '/' && cur < strlen(path))
+    int cur = min(1, strlen(path + offset) - 100); /* char 0 is slash */
+    while(path[cur - 1] != '/' && cur < strlen(path + offset))
         cur++;
-    if (cur >= strlen(path))
+    if (cur >= strlen(path + offset))
         return NULL;
-    strcpy(name, path + cur);
+    strcpy(name, path + offset + cur);
 
     /* name */
     snprintf(header + 0, 101, name);
 
     /* mode */
-    snprintf(header + 100, 8, "%.7o", inode->st_mode);
+    snprintf(header + 100, 8, "%.7o", inode->st_mode & MAX_MODE);
 
     /* user ID */
     if (inode->st_uid <= MAX_ID)
         snprintf(header + 108, 8, "%.7o", inode->st_uid);
     else
-        insert_special_int(header + 108, 7, inode->st_uid);
+        insert_special_int(header + 108, 8, inode->st_uid);
 
     /* group ID */
     if (inode->st_gid <= MAX_ID)
         snprintf(header + 116, 8, "%.7o", inode->st_gid);
     else
-        insert_special_int(header + 108, 7, inode->st_gid);
+        insert_special_int(header + 108, 8, inode->st_gid);
 
     /* size */
     if (file_type == REG_FILE_TYPE)
@@ -227,14 +234,11 @@ char *create_header(char *path)
         return NULL;
     snprintf(header + 297, 31, gr_pwd->gr_name);
 
-    /* major number */
-    snprintf(header + 329, 8, "%.7o", major(inode->st_dev));
-
-    /* minor number */
-    snprintf(header + 337, 8, "%.7o", minor(inode->st_dev));
+    /* major and minor number not needed, doesn't support special files */
 
     /* prefix */
-    snprintf(header + 345, strlen(path) - strlen(name), path);
+    snprintf(header + 345, 
+        strlen(path + offset) - strlen(name), path + offset);
 
     /* checksum */
     int sum = 0;
