@@ -41,9 +41,12 @@ void tarcreate(int file, char *path, bool verbose, bool strict)
         offset--;
 
     /* call recursive file archiver */
-    if (add_file_rec(file, path, offset) < 0);
+    if (add_file_rec(file, path, offset) < 0)
         error("create\n");
+}
 
+void end(int file)
+{
     /* allocate empty block */
     char *empty = (char *) calloc(BLOCK_SIZE, 1);
     if (empty == NULL)
@@ -55,12 +58,12 @@ void tarcreate(int file, char *path, bool verbose, bool strict)
     if (write(file, empty, BLOCK_SIZE) < 0)
         error("write\n");
     
-    /* free empty block*/
+    /* free empty block */
     free(empty);
     
     /* close */
-    //if (close(file) < 0)
-    //    error("close\n");
+    if (close(file) < 0)
+        error("close\n");
 }
 
 /* recursive file archiver */
@@ -69,21 +72,21 @@ int add_file_rec(int file, char *path, int offset)
     /* declare and get stat */
     struct stat *inode = (struct stat *) malloc(sizeof(struct stat));
     if (inode == NULL)
-        return -1;
+        {printf("72\n");return -1;}
     if (lstat(path, inode) < 0)
-        return -1;
+        {printf("74\n");return -1;}
 
     /* get file type */
     int file_type = get_file_type(inode);
     if (file_type < 0)
-        return -1;
+        {printf("79\n");return -1;}
 
     /* create and copy header */
     char *header = create_header(path, offset);
     if (header == NULL)
-        return -1;
+        {printf("84\n");return -1;}
     if (write(file, header, BLOCK_SIZE) < 0)
-        return -1;
+        {printf("86\n");return -1;}
     free(header);
 
     /* base case: regular file or symbolic link */
@@ -147,7 +150,7 @@ int add_file_rec(int file, char *path, int offset)
     free(inode);
 
     /* error for all other file types */
-    return -1;
+    {printf("150\n");return -1;};
 }
 
 /* creates and returns header from file path */
@@ -155,32 +158,32 @@ char *create_header(char *path, int offset)
 {
     /* error if path is too long */
     if (strlen(path + offset) > MAX_PATH_LENGTH)
-        return NULL;
+        {printf("158\n");return NULL;};
     
     /* get inode and file type */
     struct stat *inode = (struct stat *) malloc(sizeof(struct stat));
     if (inode == NULL)
-        return NULL;
+        {printf("163\n");return NULL;};
     if (lstat(path, inode) < 0)
-        return NULL;
+        {printf("165\n");return NULL;};
     int file_type = get_file_type(inode);
     if (file_type < 0)
-        return NULL;
+        {printf("168\n");return NULL;};
 
     /* allocate header */
     char *header = (char *) calloc(BLOCK_SIZE, 1);
     if (header == NULL)
-        return NULL;
+        {printf("173\n");return NULL;};
     
     /* allocate and copy name */
     char *name = calloc(MAX_NAME_LENGTH + 1, 1);
     if (name == NULL)
-        return NULL;
-    int cur = min(1, strlen(path + offset) - 100); /* char 0 is slash */
-    while(path[cur - 1] != '/' && cur < strlen(path + offset))
+        {printf("178\n");return NULL;};
+    int cur = min(0, strlen(path + offset) - 100); /* char 0 is slash */
+    while(path[cur] != '/' && cur < strlen(path + offset))
         cur++;
     if (cur >= strlen(path + offset))
-        return NULL;
+        cur = 0;
     strcpy(name, path + offset + cur);
 
     /* name */
@@ -216,7 +219,7 @@ char *create_header(char *path, int offset)
     /* link value if symlink */
     if (file_type == LNK_FILE_TYPE)
         if (readlink(path, header + 157, 100) < 0)
-            return NULL;
+            {printf("219\n");return NULL;};
 
     /* "ustar" */
     snprintf(header + 257, 6, "ustar");
@@ -227,13 +230,13 @@ char *create_header(char *path, int offset)
     /* user name */
     struct passwd *u_pwd = getpwuid(inode->st_uid);
     if (u_pwd == NULL)
-        return NULL;
+        {printf("230\n");return NULL;};
     snprintf(header + 265, 31, u_pwd->pw_name);
 
     /* group name */
     struct group *gr_pwd = getgrgid(inode->st_gid);
     if (gr_pwd == NULL)
-        return NULL;
+        {printf("236\n");return NULL;};
     snprintf(header + 297, 31, gr_pwd->gr_name);
 
     /* major and minor number not needed, doesn't support special files */

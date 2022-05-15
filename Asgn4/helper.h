@@ -53,3 +53,5 @@ void tarlist(int , char **, int, bool , bool );
 header* strToStruct(char *);
 void bigName(header *, char *);
 void complianceChecker(header* , bool );
+
+void end(int file);

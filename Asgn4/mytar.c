@@ -79,12 +79,14 @@ int main(int argc, char *argv[]) {
                         tarcreate(file,argv[i],verbose, stdCmp );
                     }
                 }
-                close(file);
+                
             } 
             else 
             {
                 tarcreate(file,NULL,verbose, stdCmp );
             }
+
+            end(file);
         }
         /* list tar */
         if ((strchr(argv[1],'t'))) {
