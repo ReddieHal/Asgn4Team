@@ -8,7 +8,7 @@ Debug.
 */
 
 #include "helper.h"
-#include <arpa/inet.h>
+
 
 #define MAX_ID 2097151
 #define MAX_MODE 4095
@@ -21,9 +21,8 @@ Debug.
 #define SPACE 32
 #define CHECKSUM_WIDTH 8
 
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-
 void tarcreate(int file, char *path, bool verbose, bool strict);
+void end(int file);
 int add_file_rec(int file, char *path, int offset);
 char *create_header(char *path, int offset);
 int copy_file(int dst, char *path);
@@ -37,14 +36,15 @@ void tarcreate(int file, char *path, bool verbose, bool strict)
     /* "The path that can be specified
     is not the Full Path" */
     int offset = strlen(path);
-    while (path[offset] != '/' && offset > 0)
+    while (path[offset - 1] != '/' && offset > 0)
         offset--;
 
     /* call recursive file archiver */
     if (add_file_rec(file, path, offset) < 0)
-        error("create\n");
+        perror(path);
 }
 
+/* adds null blocks and closes tar file */
 void end(int file)
 {
     /* allocate empty block */
@@ -72,28 +72,28 @@ int add_file_rec(int file, char *path, int offset)
     /* declare and get stat */
     struct stat *inode = (struct stat *) malloc(sizeof(struct stat));
     if (inode == NULL)
-        {printf("72\n");return -1;}
+        return -1;
     if (lstat(path, inode) < 0)
-        {printf("74\n");return -1;}
+        return -1;
 
     /* get file type */
     int file_type = get_file_type(inode);
     if (file_type < 0)
-        {printf("79\n");return -1;}
+        return -1;
 
     /* create and copy header */
     char *header = create_header(path, offset);
     if (header == NULL)
-        {printf("84\n");return -1;}
+        return -1;
     if (write(file, header, BLOCK_SIZE) < 0)
-        {printf("86\n");return -1;}
+        return -1;
     free(header);
 
     /* base case: regular file or symbolic link */
     if (file_type == REG_FILE_TYPE || file_type == LNK_FILE_TYPE)
     {
         if (copy_file(file, path) < 0)
-            perror("Corrupt file\n");
+            perror(path);
         free(inode);
         return file;
     }
@@ -132,7 +132,7 @@ int add_file_rec(int file, char *path, int offset)
 
             /* adds new path */
             if (add_file_rec(file, new_path, offset) < 0)
-                perror("Corrupt file\n");
+                perror(path);
 
             /* frees new path */
             free(new_path);
@@ -150,41 +150,54 @@ int add_file_rec(int file, char *path, int offset)
     free(inode);
 
     /* error for all other file types */
-    {printf("150\n");return -1;};
+    return -1;
 }
 
 /* creates and returns header from file path */
 char *create_header(char *path, int offset)
 {
-    /* error if path is too long */
-    if (strlen(path + offset) > MAX_PATH_LENGTH)
-        {printf("158\n");return NULL;};
-    
     /* get inode and file type */
     struct stat *inode = (struct stat *) malloc(sizeof(struct stat));
     if (inode == NULL)
-        {printf("163\n");return NULL;};
+        return NULL;
     if (lstat(path, inode) < 0)
-        {printf("165\n");return NULL;};
+        return NULL;
     int file_type = get_file_type(inode);
     if (file_type < 0)
-        {printf("168\n");return NULL;};
+        return NULL;
+
+    /* add final slash if path is a directory */
+    char *new_path = (char *) calloc(strlen(path) + 2, 1);
+    strcpy(new_path, path);
+    if (file_type == DIR_FILE_TYPE)
+        new_path[strlen(path)] = '/';
+
+    /* error if path is too long */
+    if (strlen(new_path + offset) > MAX_PATH_LENGTH)
+        return NULL;
 
     /* allocate header */
     char *header = (char *) calloc(BLOCK_SIZE, 1);
     if (header == NULL)
-        {printf("173\n");return NULL;};
+        return NULL;
     
     /* allocate and copy name */
     char *name = calloc(MAX_NAME_LENGTH + 1, 1);
     if (name == NULL)
-        {printf("178\n");return NULL;};
-    int cur = min(0, strlen(path + offset) - 100); /* char 0 is slash */
-    while(path[cur] != '/' && cur < strlen(path + offset))
+        return NULL;
+    int cur;
+    if (strlen(new_path + offset) > 100)
+    {
+        cur = strlen(new_path + offset) - 100;
+        while (path[cur] != '/' && cur < strlen(new_path + offset))
+            cur++;
+        if (cur >= strlen(new_path + offset))
+            return NULL;
         cur++;
-    if (cur >= strlen(path + offset))
+    }
+    else
         cur = 0;
-    strcpy(name, path + offset + cur);
+    strcpy(name, new_path + offset + cur);
 
     /* name */
     snprintf(header + 0, 101, name);
@@ -219,7 +232,7 @@ char *create_header(char *path, int offset)
     /* link value if symlink */
     if (file_type == LNK_FILE_TYPE)
         if (readlink(path, header + 157, 100) < 0)
-            {printf("219\n");return NULL;};
+            return NULL;
 
     /* "ustar" */
     snprintf(header + 257, 6, "ustar");
@@ -230,20 +243,20 @@ char *create_header(char *path, int offset)
     /* user name */
     struct passwd *u_pwd = getpwuid(inode->st_uid);
     if (u_pwd == NULL)
-        {printf("230\n");return NULL;};
+        return NULL;
     snprintf(header + 265, 31, u_pwd->pw_name);
 
     /* group name */
     struct group *gr_pwd = getgrgid(inode->st_gid);
     if (gr_pwd == NULL)
-        {printf("236\n");return NULL;};
+        return NULL;
     snprintf(header + 297, 31, gr_pwd->gr_name);
 
     /* major and minor number not needed, doesn't support special files */
 
     /* prefix */
     snprintf(header + 345, 
-        strlen(path + offset) - strlen(name), path + offset);
+        strlen(new_path + offset) - strlen(name), new_path + offset);
 
     /* checksum */
     int sum = 0;
@@ -254,6 +267,7 @@ char *create_header(char *path, int offset)
     snprintf(header + 148, 8, "%.7o", sum);
 
     /* free memory and return */
+    free(new_path);
     free(name);
     free(inode);
     return header;

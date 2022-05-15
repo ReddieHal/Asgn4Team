@@ -12,6 +12,7 @@
 #include <grp.h>
 #include <time.h>
 #include <utime.h>
+#include <arpa/inet.h>
 
 #define SEGSIZE 4096
 #define PATHMAX 256
