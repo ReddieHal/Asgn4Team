@@ -42,7 +42,7 @@ void tarcreate(int file, char *path, bool verbose, bool strict)
 
     /* call recursive file archiver */
     if (add_file_rec(file, path, offset) < 0);
-        //error("create\n");
+        error("create\n");
 
     /* allocate empty block */
     char *empty = (char *) calloc(BLOCK_SIZE, 1);

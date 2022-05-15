@@ -2,63 +2,136 @@
 #define SEGSIZE 4096
 #define HEADSIZE 512
 
-void directCase(header *head) {
-    char fullName[255];
-    
-    bigName(head, fullName);
+/*Robustly built directory checker
+* not very necessary if no path is given
+* but very necessary when path is given
+* to make sure dependencies exist
+*/
+void dirMaker(char *bigName) {
+    char tempName[256];
+    struct stat tempStat;
+    int i, nameLen;
 
-    
-    if (mkdir(fullName, S_IRWXU) < 0) {
-        perror("mkdir");
-        exit(1);
+    memset(tempName, '\0', 255);
+    nameLen = strlen(bigName);
+    i = 0;
+
+    while (i < nameLen) {
+        if (bigName[i] == '/') {
+            memcpy(tempName, bigName, i);
+
+            if (lstat(tempName, &tempStat) == -1) {
+                if (mkdir(tempName, S_IRWXU) < 0) {
+                perror("mkdir");
+                exit(1);
+                }
+            }
+        }
+        i++;
     }
 }
 
-void fileCase(header *head, int file) {
-    char fullName[255];
+
+
+void changeUtime(header* head, char *bigName) {
+    struct utimbuf new;
+    unsigned long int mtime = 0;
+
+    mtime = strtol(head->mtime, NULL, 8);
+
+    new.actime = time(NULL);
+    new.modtime = mtime;
+
+    if (utime(bigName, &new)) {
+        perror("utime");
+        exit(1);
+    }
+
+}
+
+void directCase(header *head, bool extract) {
+    char fullName[256];
+    memset(fullName, '\0', 255);
+    bigName(head, fullName);
+
+    if (extract == true) {
+        dirMaker(fullName);
+        changeUtime(head, fullName);
+    }
+    
+}
+
+void fileCase(header *head, int file, bool extract) {
+    char fullName[256];
     char buf[BLOCKSIZE];
     int fd;
     long int out;
-
+    memset(fullName, '\0', 255);
     bigName(head, fullName);
+
+    if (extract == true) {
     
-    if ((fd = open(fullName,O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR)) < 0) {
-        perror("open");
-        exit(1);
-    }
+        dirMaker(fullName);
 
-    out = strtol(head->size, NULL, 8);
+        if ((fd = open(fullName, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR)) < 0) {
+            printf("%s", fullName);
+            perror("fd-open");
+            exit(1);
+        }
+        
 
-    while (out > BLOCKSIZE) {
-        read(file, buf, BLOCKSIZE);
-        write(fd, buf, BLOCKSIZE);
-        out = out - BLOCKSIZE;
-    }
+        out = strtol(head->size, NULL, 8);
 
-    if(out > 0) {
-        read(file, buf, out);
-        write(fd, buf, out);
-        out = BLOCKSIZE - out;
-        lseek(file, out, SEEK_CUR);
+        while (out > BLOCKSIZE) {
+            read(file, buf, BLOCKSIZE);
+            write(fd, buf, BLOCKSIZE);
+            out = out - BLOCKSIZE;
+        }
+
+        if(out > 0) {
+            read(file, buf, out);
+            write(fd, buf, out);
+            out = BLOCKSIZE - out;
+            lseek(file, out, SEEK_CUR);
+        }
+
+        changeUtime(head, fullName);
+    } else {
+        out = strtol(head->size, NULL, 8);
+
+        while (out > BLOCKSIZE) {
+            lseek(file, BLOCKSIZE, SEEK_CUR);
+            out = out - BLOCKSIZE;
+        }
+
+        if(out > 0) {
+            lseek(file, out, SEEK_CUR);
+            out = BLOCKSIZE - out;
+            lseek(file, out, SEEK_CUR);
+        }
     }
-    
 }
 
-void symCase(header *head) {
-    char fullName[255];
+void symCase(header *head, bool extract) {
+    char fullName[256];
+    memset(fullName, '\0', 255);
     
-    bigName(head, fullName);
-    if (symlink(head->linkname, fullName) < 0) {
-        perror("link");
-        exit(1);
+    if (extract == true) {
+        bigName(head, fullName);
+
+        dirMaker(fullName);
+
+        if (symlink(head->linkname, fullName) < 0) {
+            perror("link");
+            exit(1);
+        }
     }
-
-
+    
 }
 
 void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
     char buf[SEGSIZE];
-    char fullName[255];
+    char fullName[256];
     char nu = '\0';
     char flag;
     bool cont = false;
@@ -67,8 +140,10 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
     long int out;
     /*read the header */
 
+
     while((charCount = read(file, &buf, HEADSIZE)) > 0) {
         cont = false;
+        memset(fullName, '\0', 255);
         if (charCount < 0) {
             perror("read");
             exit(1);
@@ -101,7 +176,8 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
             exit(1);
         } 
 
-        flag = head->typeflag[0];
+        complianceChecker(head, strict);
+        
 
         bigName(head, fullName);
 
@@ -111,14 +187,8 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
                     cont = true;
                 }
             }
-
-            if (cont == false) {
-                continue;
-            }
-        }
-
-        if (path != NULL && cont == false) {
-            continue;
+        } else {
+            cont = true;
         }
         
 
@@ -126,32 +196,24 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
             printf("%s\n", fullName);
         }
 
-        
+        flag = head->typeflag[0];
+
         switch(flag) {
             case DIRECT:
-                directCase(head);
+                directCase(head, cont);
                 break;
             case SYMLINK:
-                symCase(head);
+                symCase(head, cont);
                 break;
             case REGFILE:
             case ALTFILE:
-                fileCase(head, file);
+                fileCase(head, file, cont);
                 break;
             default:
+                fprintf(stderr, "Invalid File Type");
                 break;
                 
         }
 
-}
-    /*check the flag type*/
-    /*if its a directory*/
-    /*  make the directory */
-    /*  rename the directory */
-    /*  move to the directory */
-
-    /*if its a file */
-    /*  make/open a new file */
-    /*  copy its contents */
-    /* continue */
+    }
 }

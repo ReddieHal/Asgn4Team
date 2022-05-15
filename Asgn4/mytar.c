@@ -12,6 +12,11 @@ int main(int argc, char *argv[]) {
     *       - for "v" & "S" enable their usage
     *       - else follow their respective cmds 
     */
+    if (argc == 1 || argc == 2) {
+        fprintf(stderr, "Usage: mytar [ctxvS]f tarfile [ path [ ... ] ]\n");
+        exit(1);
+    }
+
     if (argc > 1) {
         /* print per item */
         if ((strchr(argv[1],'v'))) {
@@ -31,7 +36,7 @@ int main(int argc, char *argv[]) {
         if ((strchr(argv[1],'x'))) {
             if (argc > 2) {
                 if ((file = open(argv[2], O_RDONLY)) == -1) {
-                    perror("open");
+                    perror("mytar: open");
                     exit(1);
                 }
             }
@@ -41,13 +46,14 @@ int main(int argc, char *argv[]) {
                 for (i = 3; i < argc; i++) {
                     paths[i - 3] = argv[i];
                 }
-                tarlist(file,paths,size,verbose, stdCmp);
+                tarextract(file,paths,size,verbose, stdCmp);
             } else {
                 tarextract(file,NULL, 0, verbose, stdCmp );
             }
         }
         /* create tar */
-        if ((strchr(argv[1],'c'))) {
+        if ((strchr(argv[1],'c'))) 
+        {
             if (argc > 2) 
             {
                 if ((file = open(argv[2], O_RDWR | O_CREAT | O_TRUNC,
@@ -62,15 +68,15 @@ int main(int argc, char *argv[]) {
                 int i;
                 for (i = 3; i < argc; i++)
                 {
-                    if ((strcmp(argv[i], ".") == 0) ||
-                        (strcmp(argv[i], "..") == 0)) 
+                    if (strcmp(argv[i], ".") == 0 || 
+                        strcmp(argv[i], "..") == 0) 
                     {
                         temp = getcwd(argv[i], PATHMAX);
-                        tarcreate(file,temp,verbose, stdCmp);
+                        tarcreate(file,temp,verbose, stdCmp );
                     } 
                     else 
                     {
-                        tarcreate(file,argv[i],verbose, stdCmp);
+                        tarcreate(file,argv[i],verbose, stdCmp );
                     }
                 }
                 close(file);
@@ -84,7 +90,7 @@ int main(int argc, char *argv[]) {
         if ((strchr(argv[1],'t'))) {
             if (argc > 2) {
                 if ((file = open(argv[2], O_RDONLY)) == -1) {
-                    perror("open");
+                    perror("mytar: open");
                     exit(1);
                 }
             }

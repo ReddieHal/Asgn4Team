@@ -53,3 +53,25 @@ void bigName(header* head, char *fullName) {
         memcpy(&fullName[strlen(head->prefix)], head->name, 100);
     }
 }
+
+void complianceChecker(header* head, bool comp) {
+    char magic[] = "ustar";
+    char doubleOO[] = "00";
+
+    if (comp == false) {
+        if (memcmp(head->magic, magic, 5)) {
+            fprintf(stderr,"Compliance Failed: Magic String");
+            exit(1);
+        }
+    } else {
+        if (memcmp(head->magic, magic, 5)) {
+            fprintf(stderr,"Compliance Failed: Magic String");
+            exit(1);
+        }
+        if (memcmp(head->version, doubleOO, 2)) {
+            fprintf(stderr,"Compliance Failed: Version");
+            exit(1);
+        }
+    }
+
+}

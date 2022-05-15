@@ -11,6 +11,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <time.h>
+#include <utime.h>
 
 #define SEGSIZE 4096
 #define PATHMAX 256
@@ -51,3 +52,4 @@ void tarlist(int , char **, int, bool , bool );
 
 header* strToStruct(char *);
 void bigName(header *, char *);
+void complianceChecker(header* , bool );
