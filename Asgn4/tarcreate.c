@@ -37,7 +37,7 @@ void tarcreate(int file, char *path, bool verbose, bool strict)
     /* "The path that can be specified
     is not the Full Path" */
     int offset = strlen(path);
-    while (path[offset] != '/')
+    while (path[offset] != '/' && offset > 0)
         offset--;
 
     /* call recursive file archiver */
@@ -59,8 +59,8 @@ void tarcreate(int file, char *path, bool verbose, bool strict)
     free(empty);
     
     /* close */
-    if (close(file) < 0)
-        error("close\n");
+    //if (close(file) < 0)
+    //    error("close\n");
 }
 
 /* recursive file archiver */
@@ -91,6 +91,7 @@ int add_file_rec(int file, char *path, int offset)
     {
         if (copy_file(file, path) < 0)
             perror("Corrupt file\n");
+        free(inode);
         return file;
     }
 
@@ -140,6 +141,7 @@ int add_file_rec(int file, char *path, int offset)
         /* closes directory and returns */
         if (closedir(dir) < 0)
             return -1;
+        free(inode);
         return file;
     }
     free(inode);

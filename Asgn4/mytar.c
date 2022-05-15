@@ -48,23 +48,35 @@ int main(int argc, char *argv[]) {
         }
         /* create tar */
         if ((strchr(argv[1],'c'))) {
-            if (argc > 2) {
-                if ((file = open(argv[2], O_RDWR | O_CREAT | O_TRUNC, \
-                    S_IRWXU | S_IRWXG | S_IRWXO)) == -1) {
+            if (argc > 2) 
+            {
+                if ((file = open(argv[2], O_RDWR | O_CREAT | O_TRUNC,
+                    S_IRWXU | S_IRWXG | S_IRWXO)) == -1) 
+                {
                     perror("open");
                     exit(1);
                 }
             }
-            if (argc > 3) {
-                if ((strcmp(argv[3], ".") == 0) || \
-                (strcmp(argv[3], "..") == 0)) {
-                    temp = getcwd(argv[3], PATHMAX);
-                    tarcreate(file,temp,verbose, stdCmp );
-                } else {
-                    tarcreate(file,argv[3],verbose, stdCmp );
+            if (argc > 3) 
+            {
+                int i;
+                for (i = 3; i < argc; i++)
+                {
+                    if ((strcmp(argv[i], ".") == 0) ||
+                        (strcmp(argv[i], "..") == 0)) 
+                    {
+                        temp = getcwd(argv[i], PATHMAX);
+                        tarcreate(file,temp,verbose, stdCmp);
+                    } 
+                    else 
+                    {
+                        tarcreate(file,argv[i],verbose, stdCmp);
+                    }
                 }
-                
-            } else {
+                close(file);
+            } 
+            else 
+            {
                 tarcreate(file,NULL,verbose, stdCmp );
             }
         }
