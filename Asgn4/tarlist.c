@@ -72,12 +72,14 @@ void tarlist(int file, char **path,int pathsize, bool verbose, bool stdCmp) {
 
         if (charCount < 0) {
             perror("read");
+            free(mtime);
             exit(1);
         }
 
         if (strcmp(buf, &nu) == 0) {
             if ((read(file, &buf, HEADSIZE) > 0) && \
             (strcmp(buf, &nu) == 0)) {
+                free(mtime);
                 exit(0);
             }
         }
@@ -98,6 +100,8 @@ void tarlist(int file, char **path,int pathsize, bool verbose, bool stdCmp) {
 
         if (out != sum) {
             fprintf(stderr, "Checksum doesn't match\n");
+            free(head);
+            free(mtime);
             exit(1);
         }
 
@@ -167,7 +171,6 @@ void tarlist(int file, char **path,int pathsize, bool verbose, bool stdCmp) {
             }
             
         }
+        free(head);
     }
-
-
 }
