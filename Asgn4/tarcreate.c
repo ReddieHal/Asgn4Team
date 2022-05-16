@@ -282,7 +282,7 @@ int create_header(char *header, char *path, int offset, struct stat *inode,
     struct passwd *u_pwd = getpwuid(inode->st_uid);
     if (u_pwd == NULL)
     {
-        fprintf(stderr, "User name error: %s\n", path);\
+        fprintf(stderr, "User name error: %s\n", path);
         free(new_path);
         free(name);
         return -1;
