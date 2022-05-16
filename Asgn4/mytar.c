@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     if (strchr(argv[1],'c')) 
     {
         int i;
-        if ((file = open(argv[2], O_RDWR | O_CREAT | O_TRUNC,
+        if ((file = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC,
             S_IRWXU | S_IRWXG | S_IRWXO)) == -1) 
         {
             fprintf(stderr, "File open error\n");
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
             if (strcmp(argv[i], ".") == 0 || 
                 strcmp(argv[i], "..") == 0) 
             {
-                temp = getcwd(argv[i], PATHMAX);
+                temp = getcwd(argv[i], MAX_PATH_LENGTH);
                 tarcreate(file, temp, verbose);
             } 
             else 
