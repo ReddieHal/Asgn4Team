@@ -155,14 +155,14 @@ void tarlist(int file, char **path,int pathsize, bool verbose, bool stdCmp) {
         out = strtol(head->size, NULL, 8);
 
         if ((out > 0) ) {
-            diff = out / BLOCKSIZE;
+            diff = out / BLOCK_SIZE;
             if (diff > 0) {
-                lseek(file, diff * BLOCKSIZE, SEEK_CUR);
+                lseek(file, diff * BLOCK_SIZE, SEEK_CUR);
             }
 
-            diff = (out - (diff * BLOCKSIZE));
+            diff = (out - (diff * BLOCK_SIZE));
             if (diff > 0) {
-                lseek(file, BLOCKSIZE, SEEK_CUR);
+                lseek(file, BLOCK_SIZE, SEEK_CUR);
             }
             
         }

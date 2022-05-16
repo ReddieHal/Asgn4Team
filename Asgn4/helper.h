@@ -26,9 +26,7 @@
 #define CHECKSUM_WIDTH 8
 
 #define SEGSIZE 4096
-#define PATHMAX 256
 #define HEADSIZE 512
-#define BLOCKSIZE 512
 #define REGFILE '0'
 #define ALTFILE '\0'
 #define SYMLINK '2'

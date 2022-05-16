@@ -1,6 +1,4 @@
 #include "helper.h"
-#define SEGSIZE 4096
-#define HEADSIZE 512
 
 uint16_t GENPERM = S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
 
@@ -67,7 +65,7 @@ void directCase(header *head, bool extract) {
 
 void fileCase(header *head, int file, bool extract) {
     char fullName[256];
-    char buf[BLOCKSIZE];
+    char buf[BLOCK_SIZE];
     int fd;
     long int out;
     
