@@ -90,16 +90,16 @@ void fileCase(header *head, int file, bool extract) {
 
         out = strtol(head->size, NULL, 8);
 
-        while (out > BLOCKSIZE) {
-            read(file, buf, BLOCKSIZE);
-            write(fd, buf, BLOCKSIZE);
-            out = out - BLOCKSIZE;
+        while (out > BLOCK_SIZE) {
+            read(file, buf, BLOCK_SIZE);
+            write(fd, buf, BLOCK_SIZE);
+            out = out - BLOCK_SIZE;
         }
 
         if(out > 0) {
             read(file, buf, out);
             write(fd, buf, out);
-            out = BLOCKSIZE - out;
+            out = BLOCK_SIZE - out;
             lseek(file, out, SEEK_CUR);
         }
 
@@ -107,14 +107,14 @@ void fileCase(header *head, int file, bool extract) {
     } else {
         out = strtol(head->size, NULL, 8);
 
-        while (out > BLOCKSIZE) {
-            lseek(file, BLOCKSIZE, SEEK_CUR);
-            out = out - BLOCKSIZE;
+        while (out > BLOCK_SIZE) {
+            lseek(file, BLOCK_SIZE, SEEK_CUR);
+            out = out - BLOCK_SIZE;
         }
 
         if(out > 0) {
             lseek(file, out, SEEK_CUR);
-            out = BLOCKSIZE - out;
+            out = BLOCK_SIZE - out;
             lseek(file, out, SEEK_CUR);
         }
     }
@@ -232,14 +232,14 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
                 fprintf(stderr, "Invalid File Type");
                 out = strtol(head->size, NULL, 8);
 
-                while (out > BLOCKSIZE) {
-                    lseek(file, BLOCKSIZE, SEEK_CUR);
-                    out = out - BLOCKSIZE;
+                while (out > BLOCK_SIZE) {
+                    lseek(file, BLOCK_SIZE, SEEK_CUR);
+                    out = out - BLOCK_SIZE;
                 }
 
                 if(out > 0) {
                     lseek(file, out, SEEK_CUR);
-                    out = BLOCKSIZE - out;
+                    out = BLOCK_SIZE - out;
                     lseek(file, out, SEEK_CUR);
                 }
                 break;
