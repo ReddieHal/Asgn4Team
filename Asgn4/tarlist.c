@@ -1,7 +1,6 @@
 #include "helper.h"
 
-
-
+/*properly parsing file permissions */
 char *filePerm(header *head) {
     int i = 0;
     long int out = 0;
@@ -38,6 +37,7 @@ char *filePerm(header *head) {
     return perm;
 }
 
+/*formatting user and group name */
 char *ugname(header *head) {
     char *out = (char *)calloc(35, sizeof(char));
     out[34] = '\0';
@@ -67,8 +67,8 @@ void tarlist(int file, char **path,int pathsize, bool verbose, bool stdCmp) {
         time_t *mtime = (time_t *)calloc(1, sizeof(time_t));
         struct tm *tinfo = NULL;
 
-        memset(fullName, '\0', 255);
-        memset(timeBuf, '\0', 17);
+        memset(fullName, '\0', 256);
+        memset(timeBuf, '\0', 18);
 
         if (charCount < 0) {
             perror("read");
@@ -82,6 +82,7 @@ void tarlist(int file, char **path,int pathsize, bool verbose, bool stdCmp) {
             }
         }
 
+        /*pass string read to struct */
         head = strToStruct(buf);
 
         memcpy(&buf[148], BLANK, 8);
@@ -104,9 +105,14 @@ void tarlist(int file, char **path,int pathsize, bool verbose, bool stdCmp) {
 
         bigName(head, fullName);
        
-
+        /*nested cases
+        * if not verbose and no path - printf
+        * if not verbose and path - check match then printf
+        * if verbose and no path - format and printf
+        * if v and path - check match and printf 
+        * then slide over/lseek size of file 
+        */
         if (verbose == false) {
-
             if (path != NULL) {
                 for (i = 0; i < pathsize; i++) {
                     if (strstr(fullName, path[i])) {

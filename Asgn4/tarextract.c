@@ -2,7 +2,9 @@
 #define SEGSIZE 4096
 #define HEADSIZE 512
 
-/*Robustly built directory checker
+uint16_t GENPERM = S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+
+/* "Robustly" built directory checker
 * not very necessary if no path is given
 * but very necessary when path is given
 * to make sure dependencies exist
@@ -12,7 +14,7 @@ void dirMaker(char *bigName) {
     struct stat tempStat;
     int i, nameLen;
 
-    memset(tempName, '\0', 255);
+    memset(tempName, '\0', 256);
     nameLen = strlen(bigName);
     i = 0;
 
@@ -21,7 +23,7 @@ void dirMaker(char *bigName) {
             memcpy(tempName, bigName, i);
 
             if (lstat(tempName, &tempStat) == -1) {
-                if (mkdir(tempName, S_IRWXU) < 0) {
+                if (mkdir(tempName, S_IRWXU | S_IRWXG | S_IRWXO) < 0) {
                 perror("mkdir");
                 exit(1);
                 }
@@ -31,7 +33,7 @@ void dirMaker(char *bigName) {
     }
 }
 
-
+/*General Utime changer*/
 
 void changeUtime(header* head, char *bigName) {
     struct utimbuf new;
@@ -49,9 +51,11 @@ void changeUtime(header* head, char *bigName) {
 
 }
 
+/*Making directory case*/
+
 void directCase(header *head, bool extract) {
     char fullName[256];
-    memset(fullName, '\0', 255);
+    memset(fullName, '\0', 256);
     bigName(head, fullName);
 
     if (extract == true) {
@@ -66,14 +70,20 @@ void fileCase(header *head, int file, bool extract) {
     char buf[BLOCKSIZE];
     int fd;
     long int out;
-    memset(fullName, '\0', 255);
-    bigName(head, fullName);
+    
 
+    /* normal file with two cases:
+    * 1.) build file normally and copy contents
+    * 2.) skip over file if not in given path
+    */
     if (extract == true) {
+
+        memset(fullName, '\0', 255);
+        bigName(head, fullName);
     
         dirMaker(fullName);
 
-        if ((fd = open(fullName, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR)) < 0) {
+        if ((fd = open(fullName, O_WRONLY | O_CREAT, GENPERM)) < 0) {
             printf("%s", fullName);
             perror("fd-open");
             exit(1);
@@ -114,8 +124,11 @@ void fileCase(header *head, int file, bool extract) {
 
 void symCase(header *head, bool extract) {
     char fullName[256];
-    memset(fullName, '\0', 255);
+    memset(fullName, '\0', 256);
     
+    /*create symlink based on name
+    * checks to make sure directories exist
+    * first before making link */
     if (extract == true) {
         bigName(head, fullName);
 
@@ -143,7 +156,7 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
 
     while((charCount = read(file, &buf, HEADSIZE)) > 0) {
         cont = false;
-        memset(fullName, '\0', 255);
+        memset(fullName, '\0', 256);
         if (charCount < 0) {
             perror("read");
             exit(1);
@@ -156,6 +169,7 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
             }
         }
 
+        /*function to create struct, returns ptr to header struct*/
         head = strToStruct(buf);
 
         /*check check sum*/
@@ -176,11 +190,17 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
             exit(1);
         } 
 
+        /*additional checking*/
         complianceChecker(head, strict);
         
-
+        /*taking full name buffer and filling it with header name
+        * bigger than normal name to include extra \n in case
+        */
         bigName(head, fullName);
 
+        /*kinda inefficient but checks each path 
+        * to see if it contains any paths given
+        * to extract it and its kids */
         if (path != NULL) {
             for (i = 0; i < pathsize; i++) {
                 if (strstr(fullName, path[i])) {
@@ -196,6 +216,7 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
             printf("%s\n", fullName);
         }
 
+        /*switch case for different types of files */
         flag = head->typeflag[0];
 
         switch(flag) {
@@ -211,6 +232,18 @@ void tarextract(int file, char **path,int pathsize, bool verbose, bool strict) {
                 break;
             default:
                 fprintf(stderr, "Invalid File Type");
+                out = strtol(head->size, NULL, 8);
+
+                while (out > BLOCKSIZE) {
+                    lseek(file, BLOCKSIZE, SEEK_CUR);
+                    out = out - BLOCKSIZE;
+                }
+
+                if(out > 0) {
+                    lseek(file, out, SEEK_CUR);
+                    out = BLOCKSIZE - out;
+                    lseek(file, out, SEEK_CUR);
+                }
                 break;
                 
         }
