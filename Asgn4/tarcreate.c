@@ -1,7 +1,5 @@
 #include "helper.h"
 
-
-
 void tarcreate(int file, char *path, bool verbose);
 void end(int file);
 int add_file_rec(int file, char *path, bool verbose);
@@ -197,9 +195,9 @@ int create_header(char *header, char *path, struct stat *inode, int file_type)
         return -1;
     }
     int cur;
-    if (strlen(new_path) > 100)
+    if (strlen(new_path) > MAX_NAME_LENGTH)
     {
-        cur = strlen(new_path) - 101; /*101 since char 0 may be '/' */
+        cur = strlen(new_path) - MAX_NAME_LENGTH - 1; /* char 0 may be '/' */
         while (path[cur] != '/' && cur < strlen(new_path))
             cur++;
         if (cur >= strlen(new_path))
@@ -286,8 +284,7 @@ int create_header(char *header, char *path, struct stat *inode, int file_type)
     /* major and minor number not needed, doesn't support special files */
 
     /* prefix */
-    snprintf(header + 345, 
-        strlen(new_path) - strlen(name), new_path);
+    snprintf(header + 345, strlen(new_path) - strlen(name), new_path);
 
     /* checksum */
     int sum = 0;
