@@ -65,10 +65,10 @@ int main(int argc, char *argv[])
                 strcmp(argv[i], "..") == 0) 
             {
                 temp = getcwd(argv[i], MAX_PATH_LENGTH);
-                tarcreate(file, temp, verbose);
+                tarcreate(file, temp, verbose, stdCmp);
             } 
             else 
-                tarcreate(file, argv[i], verbose);
+                tarcreate(file, argv[i], verbose, stdCmp);
         }
         end(file);
     }

@@ -1,19 +1,20 @@
 #include "helper.h"
 
-void tarcreate(int file, char *path, bool verbose);
+void tarcreate(int file, char *path, bool verbose, bool stdCmp);
 void end(int file);
-int add_file_rec(int file, char *path, bool verbose);
-int create_header(char *header, char *path, struct stat *inode, int file_type);
+int add_file_rec(int file, char *path, bool verbose, bool stdCmp);
+int create_header(char *header, char *path, struct stat *inode, int file_type,
+    bool stdCmp);
 int copy_file(int dst, char *path);
 int get_file_type(struct stat *inode);
 void fatal_error(char *str);
 int insert_special_int(char *where, size_t size, int32_t val);
 
 /* main create function */
-void tarcreate(int file, char *path, bool verbose) 
+void tarcreate(int file, char *path, bool verbose, bool stdCmp) 
 {
     /* call recursive file archiver, all errors already handled */
-    add_file_rec(file, path, verbose);
+    add_file_rec(file, path, verbose, stdCmp);
 }
 
 /* adds null blocks and closes tar file */
@@ -22,24 +23,36 @@ void end(int file)
     /* allocate empty block */
     char *empty = (char *) calloc(BLOCK_SIZE, 1);
     if (empty == NULL)
-        fatal_error("Memory error\n");
+    {
+        fprintf(stderr, "Memory error\n");
+        exit(1);
+    }
 
     /* print 2 empty blocks */
     if (write(file, empty, BLOCK_SIZE) < 0)
-        fatal_error("File write error\n");
+    {
+        fprintf(stderr, "File write error\n");
+        exit(1);
+    }
     if (write(file, empty, BLOCK_SIZE) < 0)
-        fatal_error("File write error\n");
+    {
+        fprintf(stderr, "File write error\n");
+        exit(1);
+    }
     
     /* free empty block */
     free(empty);
     
     /* close */
     if (close(file) < 0)
-        fatal_error("File close error\n");
+    {
+        fprintf(stderr, "File close error\n");
+        exit(1);
+    }
 }
 
 /* recursive file archiver */
-int add_file_rec(int file, char *path, bool verbose)
+int add_file_rec(int file, char *path, bool verbose, bool stdCmp)
 {
     /* declare and get stat */
     struct stat *inode = (struct stat *) malloc(sizeof(struct stat));
@@ -72,7 +85,7 @@ int add_file_rec(int file, char *path, bool verbose)
         free(inode);
         return -1;
     }
-    if (create_header(header, path, inode, file_type) < 0)
+    if (create_header(header, path, inode, file_type, stdCmp) < 0)
     {
         free(header);
         free(inode);
@@ -145,7 +158,7 @@ int add_file_rec(int file, char *path, bool verbose)
             new_path[strlen(path) + strlen(dir_entry->d_name) + 1] = '\0';
 
             /* adds new path, all errors already handled */
-            add_file_rec(file, new_path, verbose);
+            add_file_rec(file, new_path, verbose, stdCmp);
 
             /* frees new path */
             free(new_path);
@@ -170,7 +183,8 @@ int add_file_rec(int file, char *path, bool verbose)
 }
 
 /* creates header from file path, puts header in buffer */
-int create_header(char *header, char *path, struct stat *inode, int file_type)
+int create_header(char *header, char *path, struct stat *inode, int file_type,
+    bool stdCmp)
 {
     /* add final slash if path is a directory */
     char *new_path = (char *) calloc(strlen(path) + 2, 1);
@@ -222,14 +236,28 @@ int create_header(char *header, char *path, struct stat *inode, int file_type)
     /* user ID */
     if (inode->st_uid <= MAX_ID)
         snprintf(header + 108, 8, "%.7o", inode->st_uid);
-    else
+    else if (!stdCmp)
         insert_special_int(header + 108, 8, inode->st_uid);
+    else
+    {
+        printf("User ID too long: %s", path);
+        free(new_path);
+        free(name);
+        return -1;
+    }
 
     /* group ID */
     if (inode->st_gid <= MAX_ID)
         snprintf(header + 116, 8, "%.7o", inode->st_gid);
-    else
+    else if (!stdCmp)
         insert_special_int(header + 108, 8, inode->st_gid);
+    else
+    {
+        printf("Group ID too long: %s", path);
+        free(new_path);
+        free(name);
+        return -1;
+    }
 
     /* size */
     if (file_type == REG_FILE_TYPE)
@@ -355,13 +383,6 @@ int get_file_type(struct stat *inode)
         return LNK_FILE_TYPE;
     else
         return -1;
-}
-
-/* prints error and exits */
-void fatal_error(char *str)
-{
-    fprintf(stderr, str);
-    exit(1);
 }
 
 /* for handling id over 7 octal digits */
