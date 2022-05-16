@@ -122,6 +122,7 @@ void tarlist(int file, char **path,int pathsize, bool verbose, bool stdCmp) {
             } else {
                 printf("%s\n", fullName);
             }
+            free(mtime);
             
         } else {
            flPermPtr = filePerm(head);
