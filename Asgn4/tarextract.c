@@ -2,6 +2,18 @@
 
 uint16_t GENPERM = S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
 
+int changePerm(header *head) {
+    long int out = 0;
+    uint16_t exePerm = S_IXGRP | S_IXUSR | S_IXOTH;
+    out = strtol(head->mode, NULL, 8);
+
+    if (out & exePerm) {
+        return exePerm;
+    } else {
+        return 0;
+    }
+}
+
 /* "Robustly" built directory checker
 * not very necessary if no path is given
 * but very necessary when path is given
@@ -66,6 +78,7 @@ void directCase(header *head, bool extract) {
 void fileCase(header *head, int file, bool extract) {
     char fullName[256];
     char buf[BLOCK_SIZE];
+    uint16_t additionalPerm = 0;
     int fd;
     long int out;
     
@@ -80,8 +93,9 @@ void fileCase(header *head, int file, bool extract) {
         bigName(head, fullName);
     
         dirMaker(fullName);
-
-        if ((fd = open(fullName, O_WRONLY | O_CREAT, GENPERM)) < 0) {
+        additionalPerm = changePerm(head);
+        if ((fd = open(fullName, O_WRONLY | O_CREAT, \
+        GENPERM | additionalPerm)) < 0) {
             printf("%s", fullName);
             perror("fd-open");
             exit(1);
@@ -102,7 +116,7 @@ void fileCase(header *head, int file, bool extract) {
             out = BLOCK_SIZE - out;
             lseek(file, out, SEEK_CUR);
         }
-
+        
         changeUtime(head, fullName);
     } else {
         out = strtol(head->size, NULL, 8);

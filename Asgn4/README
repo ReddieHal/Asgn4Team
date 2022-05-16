@@ -1,3 +1,11 @@
+Gabriel Rodriguez (grodri87)
+Shuhan Du (sdu02)
+
+No special instructions to compile just use mytar or all
+
+Hope it works! Done as a partner project between Us.
+
+Following was used during the project: Ignore
 1. Sign into UNIX
 2. run [ ssh-keygen -t ed25519 -C "your_email@example.com" ] with your username
     -Press enter / DON"T CHANGE ANYTHING
