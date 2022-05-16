@@ -1,21 +1,11 @@
 #include "helper.h"
 
-#define MAX_ID 2097151
-#define MAX_MODE 4095
-#define BLOCK_SIZE 512
-#define MAX_PATH_LENGTH 256
-#define MAX_NAME_LENGTH 100
-#define REG_FILE_TYPE 0
-#define DIR_FILE_TYPE 5
-#define LNK_FILE_TYPE 2
-#define SPACE 32
-#define CHECKSUM_WIDTH 8
+
 
 void tarcreate(int file, char *path, bool verbose);
 void end(int file);
-int add_file_rec(int file, char *path, int offset, bool verbose);
-int create_header(char *header, char *path, int offset, struct stat *inode, 
-    int file_type);
+int add_file_rec(int file, char *path, bool verbose);
+int create_header(char *header, char *path, struct stat *inode, int file_type);
 int copy_file(int dst, char *path);
 int get_file_type(struct stat *inode);
 void fatal_error(char *str);
@@ -24,14 +14,8 @@ int insert_special_int(char *where, size_t size, int32_t val);
 /* main create function */
 void tarcreate(int file, char *path, bool verbose) 
 {
-    /* "The path that can be specified
-    is not the Full Path" */
-    int offset = strlen(path);
-    while (path[offset - 1] != '/' && offset > 0)
-        offset--;
-
     /* call recursive file archiver, all errors already handled */
-    add_file_rec(file, path, offset, verbose);
+    add_file_rec(file, path, verbose);
 }
 
 /* adds null blocks and closes tar file */
@@ -57,7 +41,7 @@ void end(int file)
 }
 
 /* recursive file archiver */
-int add_file_rec(int file, char *path, int offset, bool verbose)
+int add_file_rec(int file, char *path, bool verbose)
 {
     /* declare and get stat */
     struct stat *inode = (struct stat *) malloc(sizeof(struct stat));
@@ -90,7 +74,7 @@ int add_file_rec(int file, char *path, int offset, bool verbose)
         free(inode);
         return -1;
     }
-    if (create_header(header, path, offset, inode, file_type) < 0)
+    if (create_header(header, path, inode, file_type) < 0)
     {
         free(header);
         free(inode);
@@ -163,7 +147,7 @@ int add_file_rec(int file, char *path, int offset, bool verbose)
             new_path[strlen(path) + strlen(dir_entry->d_name) + 1] = '\0';
 
             /* adds new path, all errors already handled */
-            add_file_rec(file, new_path, offset, verbose);
+            add_file_rec(file, new_path, verbose);
 
             /* frees new path */
             free(new_path);
@@ -188,8 +172,7 @@ int add_file_rec(int file, char *path, int offset, bool verbose)
 }
 
 /* creates header from file path, puts header in buffer */
-int create_header(char *header, char *path, int offset, struct stat *inode, 
-    int file_type)
+int create_header(char *header, char *path, struct stat *inode, int file_type)
 {
     /* add final slash if path is a directory */
     char *new_path = (char *) calloc(strlen(path) + 2, 1);
@@ -198,7 +181,7 @@ int create_header(char *header, char *path, int offset, struct stat *inode,
         new_path[strlen(path)] = '/';
 
     /* error if path is too long */
-    if (strlen(new_path + offset) > MAX_PATH_LENGTH)
+    if (strlen(new_path) > MAX_PATH_LENGTH)
     {
         fprintf(stderr, "Path too long: %s\n", path);
         free(new_path);
@@ -214,12 +197,12 @@ int create_header(char *header, char *path, int offset, struct stat *inode,
         return -1;
     }
     int cur;
-    if (strlen(new_path + offset) > 100)
+    if (strlen(new_path) > 100)
     {
-        cur = strlen(new_path + offset) - 101; /*101 since char 0 may be '/' */
-        while (path[cur] != '/' && cur < strlen(new_path + offset))
+        cur = strlen(new_path) - 101; /*101 since char 0 may be '/' */
+        while (path[cur] != '/' && cur < strlen(new_path))
             cur++;
-        if (cur >= strlen(new_path + offset))
+        if (cur >= strlen(new_path))
         {
             fprintf(stderr, "File name too long: %s\n", path);
             free(new_path);
@@ -230,7 +213,7 @@ int create_header(char *header, char *path, int offset, struct stat *inode,
     }
     else
         cur = 0;
-    strcpy(name, new_path + offset + cur);
+    strcpy(name, new_path + cur);
 
     /* name */
     snprintf(header + 0, 101, name);
@@ -304,7 +287,7 @@ int create_header(char *header, char *path, int offset, struct stat *inode,
 
     /* prefix */
     snprintf(header + 345, 
-        strlen(new_path + offset) - strlen(name), new_path + offset);
+        strlen(new_path) - strlen(name), new_path);
 
     /* checksum */
     int sum = 0;

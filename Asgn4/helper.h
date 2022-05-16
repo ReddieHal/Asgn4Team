@@ -14,6 +14,17 @@
 #include <utime.h>
 #include <arpa/inet.h>
 
+#define MAX_ID 2097151
+#define MAX_MODE 4095
+#define BLOCK_SIZE 512
+#define MAX_PATH_LENGTH 256
+#define MAX_NAME_LENGTH 100
+#define REG_FILE_TYPE 0
+#define DIR_FILE_TYPE 5
+#define LNK_FILE_TYPE 2
+#define SPACE 32
+#define CHECKSUM_WIDTH 8
+
 #define SEGSIZE 4096
 #define PATHMAX 256
 #define HEADSIZE 512
