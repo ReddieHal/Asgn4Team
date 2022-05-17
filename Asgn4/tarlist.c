@@ -39,9 +39,9 @@ char *filePerm(header *head) {
 
 /*formatting user and group name */
 char *ugname(header *head) {
-    char *out = (char *)calloc(35, sizeof(char));
-    out[34] = '\0';
-    if ((strlen(head->uname) + strlen(head->gname)) <= 34) {
+    char *out = (char *)calloc(65, sizeof(char));
+    out[64] = '\0';
+    if ((strlen(head->uname) + strlen(head->gname)) <= 64) {
         strcat(out, head->uname);
         strcat(out, "/");
         strcat(out, head->gname);
